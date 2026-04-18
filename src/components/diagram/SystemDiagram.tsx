@@ -1,0 +1,135 @@
+import type { Stage, Metrics, Particle, SimNode, NodeHealth } from '../../simulation/types'
+import { FlowConnection } from './FlowConnection'
+import { ComponentBox } from './ComponentBox'
+import { RequestParticle } from './RequestParticle'
+
+interface SystemDiagramProps {
+  stage: Stage
+  particles: Particle[]
+  metrics: Metrics
+  tick: number
+}
+
+// Compute node health based on metrics
+function getNodeHealth(nodeId: string, stageId: string, metrics: Metrics): NodeHealth {
+  // DB health from connection pool
+  if (nodeId === 'database' && metrics.connectionPoolPct !== undefined) {
+    if (metrics.connectionPoolPct >= 90) return 'overloaded'
+    if (metrics.connectionPoolPct >= 70) return 'stressed'
+  }
+
+  const cpuIndex = getServerIndex(nodeId)
+  if (cpuIndex === -1) return 'healthy' // not a server
+
+  const cpu = metrics.cpuPct[cpuIndex] || 0
+
+  // Stage 4: server-2 is dead
+  if (stageId === 'stage-4' && nodeId === 'server-2') {
+    return 'dead'
+  }
+
+  // Stage 9: cache nodes degrade
+  if (stageId === 'stage-9' && (nodeId.startsWith('cache-') || nodeId === 'cache')) {
+    if (nodeId === 'cache-2') return 'degraded'
+  }
+
+  if (cpu >= 85) return 'overloaded'
+  if (cpu >= 60) return 'stressed'
+  if (cpu === 0) return 'dead'
+
+  return 'healthy'
+}
+
+function getServerIndex(nodeId: string): number {
+  if (nodeId === 'server-1') return 0
+  if (nodeId === 'server-2') return 1
+  if (nodeId === 'server-3') return 2
+  if (nodeId === 'server') return 0
+  return -1
+}
+
+export function SystemDiagram({ stage, particles, metrics, tick }: SystemDiagramProps) {
+  // Enhance nodes with health and queue depth
+  const enhancedNodes: (SimNode & { health?: NodeHealth; queueDepth?: number })[] = stage.nodes.map(
+    node => ({
+      ...node,
+      health: getNodeHealth(node.id, stage.id, metrics),
+      queueDepth: Math.random() < 0.1 && metrics.cpuPct[getServerIndex(node.id)] > 80 ? Math.floor(Math.random() * 15) : 0,
+    })
+  )
+
+  return (
+    <div className="w-full h-full bg-gray-950 overflow-hidden flex items-center justify-center">
+      <svg
+        viewBox={stage.viewBox}
+        preserveAspectRatio="xMidYMid meet"
+        className="max-w-full max-h-full"
+        style={{ backgroundColor: '#030712' }}
+      >
+        {/* Defs */}
+        <defs>
+          {/* Dot grid pattern */}
+          <pattern id="dots" width={40} height={40} patternUnits="userSpaceOnUse">
+            <circle cx={20} cy={20} r={1} fill="#374151" opacity={0.3} />
+          </pattern>
+
+          {/* Arrowhead marker */}
+          <marker
+            id="arrowhead"
+            markerWidth={10}
+            markerHeight={10}
+            refX={8}
+            refY={3}
+            orient="auto"
+          >
+            <polygon points="0 0, 10 3, 0 6" fill="#374151" />
+          </marker>
+
+          {/* Particle glow filter */}
+          <filter id="particle-glow">
+            <feGaussianBlur stdDeviation={2} result="coloredBlur" />
+            <feMerge>
+              <feMergeNode in="coloredBlur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+
+          {/* Node glow filters per health state */}
+          <filter id="node-glow-stressed">
+            <feGaussianBlur stdDeviation={3} result="coloredBlur" />
+            <feFlood floodColor="#f59e0b" floodOpacity={0.3} result="coloredBlur" />
+          </filter>
+
+          <filter id="node-glow-overloaded">
+            <feGaussianBlur stdDeviation={4} result="coloredBlur" />
+            <feFlood floodColor="#ef4444" floodOpacity={0.4} result="coloredBlur" />
+          </filter>
+        </defs>
+
+        {/* Background grid (optional visual aid) */}
+        <rect width="100%" height="100%" fill="url(#dots)" />
+
+        {/* Edges (connections) */}
+        <g opacity={0.6}>
+          {stage.edges.map(edge => (
+            <FlowConnection key={edge.id} edge={edge} nodes={enhancedNodes} />
+          ))}
+        </g>
+
+        {/* Nodes (components) */}
+        <g>
+          {enhancedNodes.map(node => (
+            <ComponentBox key={node.id} node={node} metrics={metrics} stageId={stage.id} />
+          ))}
+        </g>
+
+        {/* Particles (requests flowing through) */}
+        <g opacity={0.9}>
+          {particles.map(particle => (
+            <RequestParticle key={particle.id} particle={particle} tick={tick} />
+          ))}
+        </g>
+      </svg>
+    </div>
+  )
+}
