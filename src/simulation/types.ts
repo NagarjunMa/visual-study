@@ -52,11 +52,32 @@ export interface Particle {
   type: ParticleType
 }
 
+export interface StageInfoCard {
+  technicalTerm: string
+  whenHappens: string
+  whatCondition: string
+  howToResolve: string
+  fixLabel?: string
+}
+
+export interface FixModeConfig {
+  nodes: SimNode[]
+  edges: SimEdge[]
+  viewBox: string
+  engineId: string
+  description: string
+}
+
 export interface Stage {
   id: string
   title: string
   subtitle: string
   insight: string
+  displayTitle: string
+  description: string
+  components: string[]
+  infoCard: StageInfoCard
+  fixMode?: FixModeConfig
   nodes: SimNode[]
   edges: SimEdge[]
   viewBox: string

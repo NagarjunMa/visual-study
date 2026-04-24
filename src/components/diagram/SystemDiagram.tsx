@@ -8,6 +8,7 @@ interface SystemDiagramProps {
   particles: Particle[]
   metrics: Metrics
   tick: number
+  showStatefulBubble?: boolean
 }
 
 // Compute node health based on metrics
@@ -48,7 +49,7 @@ function getServerIndex(nodeId: string): number {
   return -1
 }
 
-export function SystemDiagram({ stage, particles, metrics, tick }: SystemDiagramProps) {
+export function SystemDiagram({ stage, particles, metrics, tick, showStatefulBubble }: SystemDiagramProps) {
   // Enhance nodes with health and queue depth
   const enhancedNodes: (SimNode & { health?: NodeHealth; queueDepth?: number })[] = stage.nodes.map(
     node => ({
@@ -129,6 +130,30 @@ export function SystemDiagram({ stage, particles, metrics, tick }: SystemDiagram
             <RequestParticle key={particle.id} particle={particle} tick={tick} />
           ))}
         </g>
+
+        {/* Stateful Auth Question Bubble — shows during stateful mode */}
+        {showStatefulBubble && (
+          <g className="animate-pulse">
+            {/* Bubble background */}
+            <rect x="330" y="40" width="240" height="80" rx="10" fill="#1e293b" stroke="#f59e0b" strokeWidth="1.5" />
+            {/* Tail pointing to server */}
+            <polygon points="435,120 465,120 450,145" fill="#1e293b" stroke="#f59e0b" strokeWidth="1" />
+            {/* Question mark */}
+            <text x="365" y="100" fill="#f59e0b" fontFamily="monospace" fontSize="40" fontWeight="bold" textAnchor="middle">
+              ?
+            </text>
+            {/* Labels */}
+            <text x="410" y="68" fill="#94a3b8" fontFamily="monospace" fontSize="11" letterSpacing="1">
+              SESSION
+            </text>
+            <text x="410" y="84" fill="#94a3b8" fontFamily="monospace" fontSize="11" letterSpacing="1">
+              LOOKUP
+            </text>
+            <text x="410" y="102" fill="#f97316" fontFamily="monospace" fontSize="10">
+              in-memory...
+            </text>
+          </g>
+        )}
       </svg>
     </div>
   )

@@ -6,6 +6,15 @@ export const stage1: Stage = {
   title: 'Baseline',
   subtitle: 'Single Server — Healthy Metrics',
   insight: 'Server at 15% CPU — comfortable headroom.',
+  displayTitle: 'Baseline Architecture',
+  description: 'Single server handling all traffic. Healthy metrics at low load.',
+  components: ['Client', 'Server', 'Database'],
+  infoCard: {
+    technicalTerm: 'Monolithic Single-Server',
+    whenHappens: 'Early in application development. Traffic is low and predictable. One server handles everything.',
+    whatCondition: 'A single process serves web requests, runs business logic, and queries the database. No redundancy. At this stage, 100 RPS at 15% CPU is comfortable headroom.',
+    howToResolve: 'This is the healthy baseline. Problems emerge when traffic grows. Subsequent stages show architectural issues and solutions.',
+  },
   nodes: [
     { id: 'client', label: 'Client', type: 'client', x: 150, y: 200 },
     { id: 'server', label: 'Server', type: 'server', x: 450, y: 200 },
@@ -18,12 +27,38 @@ export const stage1: Stage = {
   viewBox: '0 0 900 400',
 }
 
-// Stage 2: Stateful Problem - Auth check in-memory (no session-store node)
+// Stage 2: Stateful Auth (merged stateful + stateless) - Toggle via fixMode
 export const stage2: Stage = {
   id: 'stage-2',
-  title: 'Stateful Problem',
+  title: 'Stateful Auth',
   subtitle: 'In-Memory Auth — CPU Spikes at 5K RPS',
   insight: 'Server checks auth in-memory. CPU jumps to 75%.',
+  displayTitle: 'Stateful Authentication Problem',
+  description: 'Server stores session data in memory. Auth check runs in-process per request, causing CPU overhead.',
+  components: ['Client', 'Server', 'Database'],
+  infoCard: {
+    technicalTerm: 'Stateful Server',
+    whenHappens: 'When user auth data is held in server memory. Works fine with one server, breaks under load balancing or horizontal scaling.',
+    whatCondition: 'Every incoming request triggers an in-memory session lookup on the server. At 5K RPS, this adds 30% CPU overhead. At 1M concurrent users, you cannot add servers — each user is sticky to the server holding their session.',
+    howToResolve: 'Move session storage to Redis/Session Store. Server becomes stateless — any replica handles any request. No sticky routing needed. Enables true horizontal scaling.',
+    fixLabel: 'Apply Fix: Go Stateless',
+  },
+  fixMode: {
+    nodes: [
+      { id: 'client', label: 'Client', type: 'client', x: 120, y: 220 },
+      { id: 'server', label: 'Server', type: 'server', x: 420, y: 220 },
+      { id: 'session-store', label: 'Session Store', type: 'session-store', x: 420, y: 360 },
+      { id: 'database', label: 'Database', type: 'database', x: 820, y: 220 },
+    ],
+    edges: [
+      { id: 'client-server', from: 'client', to: 'server' },
+      { id: 'server-store', from: 'server', to: 'session-store' },
+      { id: 'server-db', from: 'server', to: 'database' },
+    ],
+    viewBox: '0 0 1000 440',
+    engineId: 'stage-3',
+    description: 'Sessions offloaded to Redis. Server CPU drops to 45%. No sticky sessions needed.',
+  },
   nodes: [
     { id: 'client', label: 'Client', type: 'client', x: 150, y: 200 },
     { id: 'server', label: 'Server', type: 'server', x: 450, y: 200 },
@@ -36,32 +71,21 @@ export const stage2: Stage = {
   viewBox: '0 0 900 400',
 }
 
-// Stage 3: Stateless Refactor - Session store decouples state
+// Stage 3: Health Checks (old stage-4)
 export const stage3: Stage = {
-  id: 'stage-3',
-  title: 'Stateless Refactor',
-  subtitle: 'Decouple State — Session Store',
-  insight: 'Sessions offloaded. Server CPU drops to 45%.',
-  nodes: [
-    { id: 'client', label: 'Client', type: 'client', x: 120, y: 220 },
-    { id: 'server', label: 'Server', type: 'server', x: 420, y: 220 },
-    { id: 'session-store', label: 'Session Store', type: 'session-store', x: 420, y: 360 },
-    { id: 'database', label: 'Database', type: 'database', x: 820, y: 220 },
-  ],
-  edges: [
-    { id: 'client-server', from: 'client', to: 'server' },
-    { id: 'server-store', from: 'server', to: 'session-store' },
-    { id: 'server-db', from: 'server', to: 'database' },
-  ],
-  viewBox: '0 0 1000 440',
-}
-
-// Stage 4: Health Checks - 1 of 3 servers unhealthy, LB routes around
-export const stage4: Stage = {
   id: 'stage-4',
   title: 'Health Checks',
   subtitle: 'Detect Failures — Route Around Dead Nodes',
   insight: 'Server-2 dead. Load balancer skips it.',
+  displayTitle: 'Active Health Monitoring',
+  description: 'Load balancer probes server health. Dead nodes are automatically detected and bypassed.',
+  components: ['Client', 'Load Balancer', 'Server ×3', 'Database'],
+  infoCard: {
+    technicalTerm: 'Active Health Checking',
+    whenHappens: 'In any multi-server setup. A server can die mid-session. Without health checks, the load balancer keeps routing to it — users see errors.',
+    whatCondition: 'Load balancer sends periodic ping requests (health checks) to all servers. Server-2 is dead (0% CPU, no responses). LB detects failure and removes Server-2 from its rotation. Traffic reroutes to Server-1 and Server-3.',
+    howToResolve: 'Health checks prevent cascading failures. At 1M concurrent users, individual node failures are inevitable. Automated detection and rerouting is the difference between a 5-second blip and a 30-minute outage.',
+  },
   nodes: [
     { id: 'client', label: 'Client', type: 'client', x: 100, y: 220 },
     { id: 'load-balancer', label: 'Load Balancer', type: 'load-balancer', x: 350, y: 220 },
@@ -82,12 +106,21 @@ export const stage4: Stage = {
   viewBox: '0 0 1100 440',
 }
 
-// Stage 5: Scaled Stateless - 3 healthy servers, balanced load
-export const stage5: Stage = {
+// Stage 4: Scaled Stateless (old stage-5)
+export const stage4: Stage = {
   id: 'stage-5',
   title: 'Scaled Stateless',
   subtitle: 'Horizontal Scaling — All Servers Healthy',
   insight: '9K RPS across 3 servers. Each at 30% CPU.',
+  displayTitle: 'Horizontal Scaling',
+  description: 'Three stateless servers share load equally. CPU per server drops to 30%.',
+  components: ['Client', 'Load Balancer', 'Server ×3', 'Database'],
+  infoCard: {
+    technicalTerm: 'Horizontal Scaling (Scale-Out)',
+    whenHappens: 'When a single server CPU, memory, or network limits are approached. Vertical scaling (bigger server) has limits. Horizontal scaling (more servers) is theoretically unbounded.',
+    whatCondition: 'Three identical, stateless servers share 9K RPS equally via round-robin. Each runs at 30% CPU. Losing one server means 50% higher load on remaining two. Still manageable.',
+    howToResolve: 'Add more servers behind the load balancer. Because servers are stateless, any request can go to any server. At 1M concurrent users, you would run 50-100+ servers with auto-scaling.',
+  },
   nodes: [
     { id: 'client', label: 'Client', type: 'client', x: 100, y: 220 },
     { id: 'load-balancer', label: 'Load Balancer', type: 'load-balancer', x: 350, y: 220 },
@@ -108,12 +141,21 @@ export const stage5: Stage = {
   viewBox: '0 0 1100 440',
 }
 
-// Stage 6: API Gateway - Filters 20% invalid, rate-limits to 8.5K
-export const stage6: Stage = {
+// Stage 5: API Gateway (old stage-6)
+export const stage5: Stage = {
   id: 'stage-6',
   title: 'API Gateway',
   subtitle: 'Validate & Rate-Limit — 20% Rejection Rate',
   insight: '12K attempted RPS. Gateway rejects 20%, passes 9.6K.',
+  displayTitle: 'API Gateway & Rate Limiting',
+  description: 'Gateway validates requests before they reach servers. 20% invalid traffic is rejected.',
+  components: ['Client', 'API Gateway', 'Load Balancer', 'Server ×3', 'Database'],
+  infoCard: {
+    technicalTerm: 'API Gateway and Rate Limiting',
+    whenHappens: 'At any scale, but critical at high traffic. Without a gateway, malformed requests, bot floods, and auth failures all reach backend servers and waste resources.',
+    whatCondition: '12K RPS attempted. Gateway validates format, checks auth tokens, enforces per-client rate limits. 2.4K requests (20%) rejected at gateway. Only 9.6K clean requests reach load balancer.',
+    howToResolve: 'API gateways are first line of defense at scale. Protect backend services from overload, provide auth centralization, enable rate limiting per customer/IP. At 1M users, rejecting bad traffic at edge saves compute cost.',
+  },
   nodes: [
     { id: 'client', label: 'Client', type: 'client', x: 80, y: 220 },
     { id: 'api-gateway', label: 'API Gateway', type: 'api-gateway', x: 280, y: 220 },
@@ -136,12 +178,21 @@ export const stage6: Stage = {
   viewBox: '0 0 1300 440',
 }
 
-// Stage 7: DB Bottleneck - 10K RPS accepted but DB maxes out
-export const stage7: Stage = {
+// Stage 6: DB Bottleneck (old stage-7)
+export const stage6: Stage = {
   id: 'stage-7',
   title: 'DB Bottleneck',
   subtitle: 'Database Saturation — Connection Pool Exhausted',
   insight: 'DB connection pool at 95%. Latency climbs to 250ms.',
+  displayTitle: 'Database Bottleneck',
+  description: 'Connection pool saturates as all servers hammer the same database.',
+  components: ['Client', 'API Gateway', 'Load Balancer', 'Server ×3', 'Database'],
+  infoCard: {
+    technicalTerm: 'Database Connection Pool Exhaustion',
+    whenHappens: 'When request rate outpaces database ability to handle concurrent connections. Typically hits at 10K+ RPS with a single DB instance.',
+    whatCondition: 'The DB connection pool climbs to 95%. New queries wait in queue. Latency jumps from 45ms to 250ms. Errors start appearing. Servers are healthy. The database is the single bottleneck.',
+    howToResolve: 'Add a cache layer to absorb repetitive reads. 80% of queries are often for the same hot data. Serving those from cache eliminates 80% of DB load instantly.',
+  },
   nodes: [
     { id: 'client', label: 'Client', type: 'client', x: 80, y: 220 },
     { id: 'api-gateway', label: 'API Gateway', type: 'api-gateway', x: 280, y: 220 },
@@ -164,12 +215,21 @@ export const stage7: Stage = {
   viewBox: '0 0 1300 440',
 }
 
-// Stage 8: Cache Layer - 80% hit rate, latency drops to 35ms
-export const stage8: Stage = {
+// Stage 7: Cache Layer (old stage-8)
+export const stage7: Stage = {
   id: 'stage-8',
   title: 'Cache Layer',
   subtitle: 'Caching — Hit Rate 80%, Latency Drops',
   insight: '80% cache hits. Latency drops to 35ms. DB load halved.',
+  displayTitle: 'Read-Through Cache',
+  description: '80% of reads served from cache. DB queries drop by 80%. Latency falls to 35ms.',
+  components: ['Client', 'API Gateway', 'Load Balancer', 'Server ×3', 'Cache ×3', 'Database'],
+  infoCard: {
+    technicalTerm: 'Read-Through Cache (Redis/Memcached)',
+    whenHappens: 'After identifying database as bottleneck. Cache sits between application servers and database. Servers check cache first before hitting DB.',
+    whatCondition: '80% of reads are cache hits — served in <5ms directly from memory. Only 20% of reads miss cache and query the DB. DB connection pool drops to 25%. Latency falls from 250ms to 35ms.',
+    howToResolve: 'Cache is highly effective for read-heavy workloads. At 1M concurrent users, a well-tuned cache with appropriate TTLs and invalidation can absorb 90%+ of read traffic, reducing DB to write and cache-miss traffic only.',
+  },
   nodes: [
     { id: 'client', label: 'Client', type: 'client', x: 120, y: 220 },
     { id: 'api-gateway', label: 'API Gateway', type: 'api-gateway', x: 320, y: 220 },
@@ -202,12 +262,21 @@ export const stage8: Stage = {
   viewBox: '0 0 1600 440',
 }
 
-// Stage 9: Cache Failure - Cache node fails, hit rate drops, latency climbs
-export const stage9: Stage = {
+// Stage 8: Cache Failure (old stage-9)
+export const stage8: Stage = {
   id: 'stage-9',
   title: 'Cache Failure',
   subtitle: 'Cache Node Down — Hit Rate Degrades',
   insight: 'Cache fails. Hit rate drops 80%→40%. Latency climbs.',
+  displayTitle: 'Cache Node Failure',
+  description: 'One cache node dies. Hit rate degrades 80% → 40%. Latency climbs back up.',
+  components: ['Client', 'API Gateway', 'Load Balancer', 'Server ×3', 'Cache ×3', 'Database'],
+  infoCard: {
+    technicalTerm: 'Cache Node Failure / Cache Stampede Risk',
+    whenHappens: 'Cache nodes are in-memory systems — they can crash, restart, or lose data. Without redundancy, a single cache failure causes a flood of DB queries from cache-miss traffic.',
+    whatCondition: 'Cache-2 node dies. Hit rate drops from 80% to 40%. The DB receives double the queries. Latency climbs from 35ms back to 180ms. Connection pool usage spikes to 85%.',
+    howToResolve: 'Cache clusters with replication (Redis Sentinel or Redis Cluster). Keys distributed across multiple nodes. One node failure affects only ~33% of keys, not all. Auto-failover handles node replacement transparently.',
+  },
   nodes: [
     { id: 'client', label: 'Client', type: 'client', x: 120, y: 220 },
     { id: 'api-gateway', label: 'API Gateway', type: 'api-gateway', x: 320, y: 220 },
@@ -240,12 +309,21 @@ export const stage9: Stage = {
   viewBox: '0 0 1600 440',
 }
 
-// Stage 10: Full Resilience - Complete multi-tier, 0% error, low latency at 15K RPS
-export const stage10: Stage = {
+// Stage 9: Full Resilience (old stage-10)
+export const stage9: Stage = {
   id: 'stage-10',
   title: 'Full Resilience',
   subtitle: 'Multi-Tier System — 15K RPS, Zero Errors',
   insight: '15K RPS. All healthy. 85% cache hit. 28ms latency.',
+  displayTitle: 'Full Resilience Architecture',
+  description: 'Multi-tier system at 15K RPS. All nodes healthy. Zero errors.',
+  components: ['Client', 'API Gateway', 'Load Balancer', 'Server ×3', 'Cache ×3', 'Database'],
+  infoCard: {
+    technicalTerm: 'Multi-Tier Resilient Architecture',
+    whenHappens: 'The end state of systematic scaling. Each tier is redundant, monitored, and independently scalable.',
+    whatCondition: '15K RPS. API gateway handles auth and rate limiting. LB distributes across 3 healthy servers. Redis cluster absorbs 85% of reads with auto-failover. DB handles only 15% of queries. Zero errors.',
+    howToResolve: 'This architecture scales to 1M+ concurrent users by: auto-scaling server tier, Redis Cluster for cache, read replicas for DB, and CDN at the edge. Each component can be scaled or replaced independently.',
+  },
   nodes: [
     { id: 'client', label: 'Client', type: 'client', x: 120, y: 220 },
     { id: 'api-gateway', label: 'API Gateway', type: 'api-gateway', x: 320, y: 220 },
@@ -288,5 +366,4 @@ export const stages: Stage[] = [
   stage7,
   stage8,
   stage9,
-  stage10,
 ]
