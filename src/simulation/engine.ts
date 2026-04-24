@@ -147,6 +147,47 @@ function computeMetrics(stageId: string, tick: number): Metrics {
       }
     }
 
+    case 'stage-api-problem': {
+      // API Gateway problem: high load hitting servers directly, overloaded
+      const progress = sigmoid(tick, 360)
+      const rps = 3000 + progress * (14000 - 3000)
+      const cpuBase = 20 + progress * 75
+      const errorPct = progress > 0.6 ? (progress - 0.6) * 40 : 0
+      return {
+        rps: Math.round(rps),
+        latencyMs: Math.round(30 + progress * 370),
+        errorPct,
+        cpuPct: [Math.min(cpuBase, 95), Math.min(cpuBase * 0.9, 95), Math.min(cpuBase * 0.85, 95)],
+        cacheHitPct: 0,
+      }
+    }
+
+    case 'stage-lb-problem': {
+      // Load Balancer problem: single server handling spike load
+      const progress = sigmoid(tick, 300)
+      const rps = 500 + progress * (8000 - 500)
+      const cpu = 15 + progress * 80
+      const errorPct = cpu > 80 ? (cpu - 80) * 3 : 0
+      return {
+        rps: Math.round(rps),
+        latencyMs: Math.round(20 + progress * 480),
+        errorPct,
+        cpuPct: [Math.min(cpu, 98)],
+        cacheHitPct: 0,
+      }
+    }
+
+    case 'stage-lb-fix1': {
+      // Horizontal scaling without LB: hotspot on server-1
+      return {
+        rps: 9000,
+        latencyMs: 85,
+        errorPct: 3,
+        cpuPct: [72, 16, 12],  // server-1 hotspot, others idle
+        cacheHitPct: 0,
+      }
+    }
+
     default:
       return {
         rps: 0,
@@ -276,6 +317,34 @@ function spawnParticles(
         color = '#f97316'
         duration = 1200
       }
+    } else if (stageId === 'stage-api-problem') {
+      // API problem: direct to random server, some fail (error particles)
+      const toServer = Math.floor(Math.random() * 3)  // 0, 1, or 2
+      const serverY = toServer === 0 ? 110 : toServer === 1 ? 220 : 330
+      const isFailed = Math.random() < 0.15  // 15% failure rate
+      if (isFailed) {
+        particleType = 'error'
+        waypoints = [[100, 220], [400, serverY]]  // stop mid-path (failed)
+        color = '#ef4444'
+        duration = 600
+      } else {
+        waypoints = [[100, 220], [400, serverY], [750, 220]]
+        color = '#22c55e'
+      }
+    } else if (stageId === 'stage-lb-fix1') {
+      // Hotspot: 70% to server1, 15% to others
+      let toServer = 0  // default server-1
+      const rand = Math.random()
+      if (rand < 0.7) {
+        toServer = 0  // server-1: 70% (hotspot)
+      } else if (rand < 0.85) {
+        toServer = 1  // server-2: 15%
+      } else {
+        toServer = 2  // server-3: 15%
+      }
+      const serverY = toServer === 0 ? 110 : toServer === 1 ? 220 : 330
+      waypoints = [[100, 220], [450, serverY], [850, 220]]
+      color = '#22c55e'
     }
 
     newParticles.push({
@@ -360,6 +429,31 @@ function getWaypoints(stageId: string): [number, number][] {
         [750, 220], // server-2
         [1350, 220], // database
       ]
+
+    case 'stage-api-problem': {
+      // Client → random server → database
+      return [
+        [100, 220], // client
+        [400, 110], // server-1
+        [400, 220], // server-2
+        [400, 330], // server-3
+        [750, 220], // database
+      ]
+    }
+
+    case 'stage-lb-problem':
+      return [[150, 200], [450, 200], [750, 200]]  // client → server → db
+
+    case 'stage-lb-fix1': {
+      // Client → hotspot: mostly server-1, some to s2/s3 → database
+      return [
+        [100, 220], // client
+        [450, 110], // server-1 (hotspot target)
+        [450, 220], // server-2
+        [450, 330], // server-3
+        [850, 220], // database
+      ]
+    }
 
     default:
       return []

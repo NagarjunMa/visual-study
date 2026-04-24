@@ -57,7 +57,6 @@ export interface StageInfoCard {
   whenHappens: string
   whatCondition: string
   howToResolve: string
-  fixLabel?: string
 }
 
 export interface FixModeConfig {
@@ -65,7 +64,10 @@ export interface FixModeConfig {
   edges: SimEdge[]
   viewBox: string
   engineId: string
-  description: string
+  enterLabel: string       // Button text to enter this fix mode
+  description: string      // Short description shown in sidebar header
+  whatCondition?: string   // Overrides infoCard.whatCondition when in this mode
+  howToResolve?: string    // Overrides infoCard.howToResolve when in this mode
 }
 
 export interface Stage {
@@ -77,7 +79,7 @@ export interface Stage {
   description: string
   components: string[]
   infoCard: StageInfoCard
-  fixMode?: FixModeConfig
+  fixModes?: FixModeConfig[]  // Multiple fix modes for progressive problem solving
   nodes: SimNode[]
   edges: SimEdge[]
   viewBox: string

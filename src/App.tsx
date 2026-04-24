@@ -9,24 +9,28 @@ function App() {
   const [currentStageIndex, setCurrentStageIndex] = useState(0)
   const [isPlaying, setIsPlaying] = useState(true)
   const [showSelector, setShowSelector] = useState(true)
-  const [inFixMode, setInFixMode] = useState(false)
+  const [fixModeIndex, setFixModeIndex] = useState(-1)  // -1 = problem, 0+ = fix index
   const [fromSimulation, setFromSimulation] = useState(false)
 
   const currentStage = stages[currentStageIndex]
 
   // Reset fix mode when stage changes
   useEffect(() => {
-    setInFixMode(false)
+    setFixModeIndex(-1)
   }, [currentStageIndex])
 
   // Compute effective stage for diagram and simulation
-  const diagramStage = (inFixMode && currentStage.fixMode)
+  const activeFix = (fixModeIndex >= 0 && currentStage.fixModes)
+    ? currentStage.fixModes[fixModeIndex]
+    : null
+
+  const diagramStage = activeFix
     ? {
         ...currentStage,
-        id: currentStage.fixMode.engineId,
-        nodes: currentStage.fixMode.nodes,
-        edges: currentStage.fixMode.edges,
-        viewBox: currentStage.fixMode.viewBox,
+        id: activeFix.engineId,
+        nodes: activeFix.nodes,
+        edges: activeFix.edges,
+        viewBox: activeFix.viewBox,
       }
     : currentStage
 
@@ -70,17 +74,17 @@ function App() {
           <div className="px-4 pt-4 pb-2" style={{ borderBottom: '1px solid rgba(255,176,0,0.25)' }}>
             <div className="font-pixel text-xs text-gray-600 mb-1">SIMULATION</div>
             <div className="font-terminal text-xl text-amber-500">{currentStage.displayTitle}</div>
-            {inFixMode && currentStage.fixMode && (
-              <div className="font-terminal text-xs text-green-400 mt-1">{currentStage.fixMode.description}</div>
+            {activeFix && (
+              <div className="font-terminal text-xs text-green-400 mt-1">{activeFix.description}</div>
             )}
           </div>
 
           {/* Info Card content */}
           <InfoCard
             infoCard={currentStage.infoCard}
-            inFixMode={inFixMode}
-            onApplyFix={() => setInFixMode(true)}
-            canFix={!!currentStage.fixMode}
+            fixModes={currentStage.fixModes}
+            fixModeIndex={fixModeIndex}
+            onAdvanceFix={() => setFixModeIndex(idx => idx + 1)}
           />
         </div>
 
@@ -113,7 +117,7 @@ function App() {
             particles={particles}
             metrics={metrics}
             tick={tick}
-            showStatefulBubble={currentStage.id === 'stage-2' && !inFixMode}
+            showStatefulBubble={currentStage.id === 'stage-2' && fixModeIndex < 0}
           />
         </div>
       </div>

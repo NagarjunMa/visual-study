@@ -1,6 +1,6 @@
 import type { Stage } from './types'
 
-// Stage 1: Baseline - Single server, healthy metrics
+// Stage 1: Baseline
 export const stage1: Stage = {
   id: 'stage-1',
   title: 'Baseline',
@@ -27,7 +27,7 @@ export const stage1: Stage = {
   viewBox: '0 0 900 400',
 }
 
-// Stage 2: Stateful Auth (merged stateful + stateless) - Toggle via fixMode
+// Stage 2: Stateful Auth with Fix
 export const stage2: Stage = {
   id: 'stage-2',
   title: 'Stateful Auth',
@@ -39,26 +39,28 @@ export const stage2: Stage = {
   infoCard: {
     technicalTerm: 'Stateful Server',
     whenHappens: 'When user auth data is held in server memory. Works fine with one server, breaks under load balancing or horizontal scaling.',
-    whatCondition: 'Every incoming request triggers an in-memory session lookup on the server. At 5K RPS, this adds 30% CPU overhead. At 1M concurrent users, you cannot add servers — each user is sticky to the server holding their session.',
-    howToResolve: 'Move session storage to Redis/Session Store. Server becomes stateless — any replica handles any request. No sticky routing needed. Enables true horizontal scaling.',
-    fixLabel: 'Apply Fix: Go Stateless',
+    whatCondition: 'Every incoming request triggers an in-memory session lookup on the server. At 5K RPS, this adds 30% CPU overhead. At 1M concurrent users, you cannot add servers without breaking auth.',
+    howToResolve: 'Move session storage to Redis/Session Store. Server becomes stateless. Any replica handles any request. No sticky routing needed.',
   },
-  fixMode: {
-    nodes: [
-      { id: 'client', label: 'Client', type: 'client', x: 120, y: 220 },
-      { id: 'server', label: 'Server', type: 'server', x: 420, y: 220 },
-      { id: 'session-store', label: 'Session Store', type: 'session-store', x: 420, y: 360 },
-      { id: 'database', label: 'Database', type: 'database', x: 820, y: 220 },
-    ],
-    edges: [
-      { id: 'client-server', from: 'client', to: 'server' },
-      { id: 'server-store', from: 'server', to: 'session-store' },
-      { id: 'server-db', from: 'server', to: 'database' },
-    ],
-    viewBox: '0 0 1000 440',
-    engineId: 'stage-3',
-    description: 'Sessions offloaded to Redis. Server CPU drops to 45%. No sticky sessions needed.',
-  },
+  fixModes: [
+    {
+      nodes: [
+        { id: 'client', label: 'Client', type: 'client', x: 120, y: 220 },
+        { id: 'server', label: 'Server', type: 'server', x: 420, y: 220 },
+        { id: 'session-store', label: 'Session Store', type: 'session-store', x: 420, y: 360 },
+        { id: 'database', label: 'Database', type: 'database', x: 820, y: 220 },
+      ],
+      edges: [
+        { id: 'client-server', from: 'client', to: 'server' },
+        { id: 'server-store', from: 'server', to: 'session-store' },
+        { id: 'server-db', from: 'server', to: 'database' },
+      ],
+      viewBox: '0 0 1000 440',
+      engineId: 'stage-3',
+      enterLabel: 'Apply Fix: Go Stateless',
+      description: 'Sessions offloaded to Redis. Server CPU drops to 45%. No sticky sessions needed.',
+    },
+  ],
   nodes: [
     { id: 'client', label: 'Client', type: 'client', x: 150, y: 200 },
     { id: 'server', label: 'Server', type: 'server', x: 450, y: 200 },
@@ -71,115 +73,170 @@ export const stage2: Stage = {
   viewBox: '0 0 900 400',
 }
 
-// Stage 3: Health Checks (old stage-4)
+// Stage 3: API Gateway & Rate Limiting (NEW)
 export const stage3: Stage = {
-  id: 'stage-4',
-  title: 'Health Checks',
-  subtitle: 'Detect Failures — Route Around Dead Nodes',
-  insight: 'Server-2 dead. Load balancer skips it.',
-  displayTitle: 'Active Health Monitoring',
-  description: 'Load balancer probes server health. Dead nodes are automatically detected and bypassed.',
-  components: ['Client', 'Load Balancer', 'Server ×3', 'Database'],
-  infoCard: {
-    technicalTerm: 'Active Health Checking',
-    whenHappens: 'In any multi-server setup. A server can die mid-session. Without health checks, the load balancer keeps routing to it — users see errors.',
-    whatCondition: 'Load balancer sends periodic ping requests (health checks) to all servers. Server-2 is dead (0% CPU, no responses). LB detects failure and removes Server-2 from its rotation. Traffic reroutes to Server-1 and Server-3.',
-    howToResolve: 'Health checks prevent cascading failures. At 1M concurrent users, individual node failures are inevitable. Automated detection and rerouting is the difference between a 5-second blip and a 30-minute outage.',
-  },
-  nodes: [
-    { id: 'client', label: 'Client', type: 'client', x: 100, y: 220 },
-    { id: 'load-balancer', label: 'Load Balancer', type: 'load-balancer', x: 350, y: 220 },
-    { id: 'server-1', label: 'Server 1', type: 'server', x: 620, y: 110 },
-    { id: 'server-2', label: 'Server 2', type: 'server', x: 620, y: 220 },
-    { id: 'server-3', label: 'Server 3', type: 'server', x: 620, y: 330 },
-    { id: 'database', label: 'Database', type: 'database', x: 950, y: 220 },
-  ],
-  edges: [
-    { id: 'client-lb', from: 'client', to: 'load-balancer' },
-    { id: 'lb-s1', from: 'load-balancer', to: 'server-1' },
-    { id: 'lb-s2', from: 'load-balancer', to: 'server-2' },
-    { id: 'lb-s3', from: 'load-balancer', to: 'server-3' },
-    { id: 's1-db', from: 'server-1', to: 'database' },
-    { id: 's2-db', from: 'server-2', to: 'database' },
-    { id: 's3-db', from: 'server-3', to: 'database' },
-  ],
-  viewBox: '0 0 1100 440',
-}
-
-// Stage 4: Scaled Stateless (old stage-5)
-export const stage4: Stage = {
-  id: 'stage-5',
-  title: 'Scaled Stateless',
-  subtitle: 'Horizontal Scaling — All Servers Healthy',
-  insight: '9K RPS across 3 servers. Each at 30% CPU.',
-  displayTitle: 'Horizontal Scaling',
-  description: 'Three stateless servers share load equally. CPU per server drops to 30%.',
-  components: ['Client', 'Load Balancer', 'Server ×3', 'Database'],
-  infoCard: {
-    technicalTerm: 'Horizontal Scaling (Scale-Out)',
-    whenHappens: 'When a single server CPU, memory, or network limits are approached. Vertical scaling (bigger server) has limits. Horizontal scaling (more servers) is theoretically unbounded.',
-    whatCondition: 'Three identical, stateless servers share 9K RPS equally via round-robin. Each runs at 30% CPU. Losing one server means 50% higher load on remaining two. Still manageable.',
-    howToResolve: 'Add more servers behind the load balancer. Because servers are stateless, any request can go to any server. At 1M concurrent users, you would run 50-100+ servers with auto-scaling.',
-  },
-  nodes: [
-    { id: 'client', label: 'Client', type: 'client', x: 100, y: 220 },
-    { id: 'load-balancer', label: 'Load Balancer', type: 'load-balancer', x: 350, y: 220 },
-    { id: 'server-1', label: 'Server 1', type: 'server', x: 620, y: 110 },
-    { id: 'server-2', label: 'Server 2', type: 'server', x: 620, y: 220 },
-    { id: 'server-3', label: 'Server 3', type: 'server', x: 620, y: 330 },
-    { id: 'database', label: 'Database', type: 'database', x: 950, y: 220 },
-  ],
-  edges: [
-    { id: 'client-lb', from: 'client', to: 'load-balancer' },
-    { id: 'lb-s1', from: 'load-balancer', to: 'server-1' },
-    { id: 'lb-s2', from: 'load-balancer', to: 'server-2' },
-    { id: 'lb-s3', from: 'load-balancer', to: 'server-3' },
-    { id: 's1-db', from: 'server-1', to: 'database' },
-    { id: 's2-db', from: 'server-2', to: 'database' },
-    { id: 's3-db', from: 'server-3', to: 'database' },
-  ],
-  viewBox: '0 0 1100 440',
-}
-
-// Stage 5: API Gateway (old stage-6)
-export const stage5: Stage = {
-  id: 'stage-6',
+  id: 'stage-api-gw',
   title: 'API Gateway',
-  subtitle: 'Validate & Rate-Limit — 20% Rejection Rate',
-  insight: '12K attempted RPS. Gateway rejects 20%, passes 9.6K.',
+  subtitle: 'Validate & Rate-Limit Incoming Requests',
+  insight: 'Unfiltered traffic overwhelms servers. Gateway filters bad requests.',
   displayTitle: 'API Gateway & Rate Limiting',
-  description: 'Gateway validates requests before they reach servers. 20% invalid traffic is rejected.',
-  components: ['Client', 'API Gateway', 'Load Balancer', 'Server ×3', 'Database'],
+  description: 'Protect servers from overload with validation, rate limiting, and request filtering.',
+  components: ['Client', 'API Gateway', 'Server ×3', 'Database'],
   infoCard: {
-    technicalTerm: 'API Gateway and Rate Limiting',
-    whenHappens: 'At any scale, but critical at high traffic. Without a gateway, malformed requests, bot floods, and auth failures all reach backend servers and waste resources.',
-    whatCondition: '12K RPS attempted. Gateway validates format, checks auth tokens, enforces per-client rate limits. 2.4K requests (20%) rejected at gateway. Only 9.6K clean requests reach load balancer.',
-    howToResolve: 'API gateways are first line of defense at scale. Protect backend services from overload, provide auth centralization, enable rate limiting per customer/IP. At 1M users, rejecting bad traffic at edge saves compute cost.',
+    technicalTerm: 'API Gateway & Rate Limiting',
+    whenHappens: 'When direct client-to-server communication allows bad actors, bots, and malformed requests to overwhelm servers.',
+    whatCondition: '14K unfiltered RPS hit servers directly. No validation, no rate limiting. Servers receive bots and malformed requests. CPU spikes to 95%. Error rate climbs above 30%.',
+    howToResolve: 'Add an API Gateway as the single entry point. It validates format, checks auth, enforces rate limits, and routes requests. Bad traffic never reaches application servers.',
   },
+  fixModes: [
+    {
+      nodes: [
+        { id: 'client', label: 'Client', type: 'client', x: 100, y: 220 },
+        { id: 'server-1', label: 'Server 1', type: 'server', x: 400, y: 110 },
+        { id: 'server-2', label: 'Server 2', type: 'server', x: 400, y: 220 },
+        { id: 'server-3', label: 'Server 3', type: 'server', x: 400, y: 330 },
+        { id: 'database', label: 'Database', type: 'database', x: 750, y: 220 },
+      ],
+      edges: [
+        { id: 'client-s1', from: 'client', to: 'server-1' },
+        { id: 'client-s2', from: 'client', to: 'server-2' },
+        { id: 'client-s3', from: 'client', to: 'server-3' },
+        { id: 's1-db', from: 'server-1', to: 'database' },
+        { id: 's2-db', from: 'server-2', to: 'database' },
+        { id: 's3-db', from: 'server-3', to: 'database' },
+      ],
+      viewBox: '0 0 900 440',
+      engineId: 'stage-api-problem',
+      enterLabel: 'Add API Gateway',
+      description: 'Unfiltered traffic directly hitting servers. Servers overloaded, requests dropped.',
+      whatCondition: '14K RPS hit 3 servers directly. No filtering. Each server at 95% CPU. Errors exceed 30%. Requests being dropped.',
+      howToResolve: 'Add an API Gateway to filter requests, rate limit, validate, and protect servers.',
+    },
+    {
+      nodes: [
+        { id: 'client', label: 'Client', type: 'client', x: 80, y: 220 },
+        { id: 'api-gateway', label: 'API Gateway', type: 'api-gateway', x: 280, y: 220 },
+        { id: 'load-balancer', label: 'Load Balancer', type: 'load-balancer', x: 520, y: 220 },
+        { id: 'server-1', label: 'Server 1', type: 'server', x: 750, y: 110 },
+        { id: 'server-2', label: 'Server 2', type: 'server', x: 750, y: 220 },
+        { id: 'server-3', label: 'Server 3', type: 'server', x: 750, y: 330 },
+        { id: 'database', label: 'Database', type: 'database', x: 1150, y: 220 },
+      ],
+      edges: [
+        { id: 'client-gw', from: 'client', to: 'api-gateway' },
+        { id: 'gw-lb', from: 'api-gateway', to: 'load-balancer' },
+        { id: 'lb-s1', from: 'load-balancer', to: 'server-1' },
+        { id: 'lb-s2', from: 'load-balancer', to: 'server-2' },
+        { id: 'lb-s3', from: 'load-balancer', to: 'server-3' },
+        { id: 's1-db', from: 'server-1', to: 'database' },
+        { id: 's2-db', from: 'server-2', to: 'database' },
+        { id: 's3-db', from: 'server-3', to: 'database' },
+      ],
+      viewBox: '0 0 1300 440',
+      engineId: 'stage-6',
+      enterLabel: '',  // Final fix, no next step
+      description: 'API Gateway filters bad traffic. 20% rejected, 9.6K clean requests pass to servers.',
+      whatCondition: '12K attempted RPS. API Gateway validates, rate limits, rejects 20% (bots, malformed). Only 9.6K clean requests reach servers. Each server at 32% CPU.',
+      howToResolve: 'Gateway protects servers from overload. Bad actors are rejected at the edge. Servers focus on legitimate traffic.',
+    },
+  ],
   nodes: [
-    { id: 'client', label: 'Client', type: 'client', x: 80, y: 220 },
-    { id: 'api-gateway', label: 'API Gateway', type: 'api-gateway', x: 280, y: 220 },
-    { id: 'load-balancer', label: 'Load Balancer', type: 'load-balancer', x: 520, y: 220 },
-    { id: 'server-1', label: 'Server 1', type: 'server', x: 750, y: 110 },
-    { id: 'server-2', label: 'Server 2', type: 'server', x: 750, y: 220 },
-    { id: 'server-3', label: 'Server 3', type: 'server', x: 750, y: 330 },
-    { id: 'database', label: 'Database', type: 'database', x: 1150, y: 220 },
+    { id: 'client', label: 'Client', type: 'client', x: 100, y: 220 },
+    { id: 'server-1', label: 'Server 1', type: 'server', x: 400, y: 110 },
+    { id: 'server-2', label: 'Server 2', type: 'server', x: 400, y: 220 },
+    { id: 'server-3', label: 'Server 3', type: 'server', x: 400, y: 330 },
+    { id: 'database', label: 'Database', type: 'database', x: 750, y: 220 },
   ],
   edges: [
-    { id: 'client-gw', from: 'client', to: 'api-gateway' },
-    { id: 'gw-lb', from: 'api-gateway', to: 'load-balancer' },
-    { id: 'lb-s1', from: 'load-balancer', to: 'server-1' },
-    { id: 'lb-s2', from: 'load-balancer', to: 'server-2' },
-    { id: 'lb-s3', from: 'load-balancer', to: 'server-3' },
+    { id: 'client-s1', from: 'client', to: 'server-1' },
+    { id: 'client-s2', from: 'client', to: 'server-2' },
+    { id: 'client-s3', from: 'client', to: 'server-3' },
     { id: 's1-db', from: 'server-1', to: 'database' },
     { id: 's2-db', from: 'server-2', to: 'database' },
     { id: 's3-db', from: 'server-3', to: 'database' },
   ],
-  viewBox: '0 0 1300 440',
+  viewBox: '0 0 900 440',
 }
 
-// Stage 6: DB Bottleneck (old stage-7)
-export const stage6: Stage = {
+// Stage 4: Load Balancer & Health Checks (NEW, with multiple fixes)
+export const stage4: Stage = {
+  id: 'stage-loadbalancer',
+  title: 'Load Balancer',
+  subtitle: 'Distribute Load & Detect Failures',
+  insight: 'Single server crashes with traffic spike. Horizontal scaling + LB solves it.',
+  displayTitle: 'Horizontal Scaling & Load Balancing',
+  description: 'Scale horizontally and use load balancing to handle spikes and failures.',
+  components: ['Client', 'Load Balancer', 'Server ×3', 'Database'],
+  infoCard: {
+    technicalTerm: 'Horizontal Scaling & Load Balancing',
+    whenHappens: 'When a single server cannot handle traffic spikes. Vertical scaling has hard limits. Horizontal scaling is required but introduces new distribution challenges.',
+    whatCondition: '8K RPS spike overwhelms a single server. CPU hits 98%. Latency spikes to 500ms. Error rate 25%. If server dies, all requests fail.',
+    howToResolve: 'Add more servers horizontally. But without a load balancer, traffic routes unevenly causing hotspots. Solution: Use a load balancer with health checks.',
+  },
+  fixModes: [
+    {
+      nodes: [
+        { id: 'client', label: 'Client', type: 'client', x: 100, y: 220 },
+        { id: 'server-1', label: 'Server 1', type: 'server', x: 450, y: 110 },
+        { id: 'server-2', label: 'Server 2', type: 'server', x: 450, y: 220 },
+        { id: 'server-3', label: 'Server 3', type: 'server', x: 450, y: 330 },
+        { id: 'database', label: 'Database', type: 'database', x: 850, y: 220 },
+      ],
+      edges: [
+        { id: 'client-s1', from: 'client', to: 'server-1' },
+        { id: 'client-s2', from: 'client', to: 'server-2' },
+        { id: 'client-s3', from: 'client', to: 'server-3' },
+        { id: 's1-db', from: 'server-1', to: 'database' },
+        { id: 's2-db', from: 'server-2', to: 'database' },
+        { id: 's3-db', from: 'server-3', to: 'database' },
+      ],
+      viewBox: '0 0 1050 440',
+      engineId: 'stage-lb-problem',
+      enterLabel: 'Add More Servers',
+      description: 'Added 3 servers but no load balancer. Traffic routes unevenly (hotspot). Server-1 at 72% CPU, others mostly idle.',
+      whatCondition: '9K RPS across 3 servers but uneven routing. Server-1 becomes a hotspot at 72% CPU (70% of traffic). Server-2 and Server-3 idle at 15% each. Single-point-of-failure if Server-1 crashes.',
+      howToResolve: 'Add a Load Balancer to distribute traffic evenly and monitor server health. LB detects dead servers automatically.',
+    },
+    {
+      nodes: [
+        { id: 'client', label: 'Client', type: 'client', x: 100, y: 220 },
+        { id: 'load-balancer', label: 'Load Balancer', type: 'load-balancer', x: 350, y: 220 },
+        { id: 'server-1', label: 'Server 1', type: 'server', x: 620, y: 110 },
+        { id: 'server-2', label: 'Server 2', type: 'server', x: 620, y: 220 },
+        { id: 'server-3', label: 'Server 3', type: 'server', x: 620, y: 330 },
+        { id: 'database', label: 'Database', type: 'database', x: 950, y: 220 },
+      ],
+      edges: [
+        { id: 'client-lb', from: 'client', to: 'load-balancer' },
+        { id: 'lb-s1', from: 'load-balancer', to: 'server-1' },
+        { id: 'lb-s2', from: 'load-balancer', to: 'server-2' },
+        { id: 'lb-s3', from: 'load-balancer', to: 'server-3' },
+        { id: 's1-db', from: 'server-1', to: 'database' },
+        { id: 's2-db', from: 'server-2', to: 'database' },
+        { id: 's3-db', from: 'server-3', to: 'database' },
+      ],
+      viewBox: '0 0 1100 440',
+      engineId: 'stage-5',
+      enterLabel: '',  // Final fix, no next step
+      description: 'Load Balancer distributes traffic evenly. Health checks detect failures. Each server at 30% CPU.',
+      whatCondition: '9K RPS evenly distributed via LB: 3K per server, 30% CPU each. Health checks detect dead servers and remove from rotation. Zero errors even during failures.',
+      howToResolve: 'Load Balancer is the solution. It automatically distributes traffic and detects failures. Servers stay healthy and responsive.',
+    },
+  ],
+  nodes: [
+    { id: 'client', label: 'Client', type: 'client', x: 150, y: 200 },
+    { id: 'server', label: 'Server', type: 'server', x: 450, y: 200 },
+    { id: 'database', label: 'Database', type: 'database', x: 750, y: 200 },
+  ],
+  edges: [
+    { id: 'client-server', from: 'client', to: 'server' },
+    { id: 'server-db', from: 'server', to: 'database' },
+  ],
+  viewBox: '0 0 900 400',
+}
+
+// Stage 5: DB Bottleneck (old stage-7)
+export const stage5: Stage = {
   id: 'stage-7',
   title: 'DB Bottleneck',
   subtitle: 'Database Saturation — Connection Pool Exhausted',
@@ -189,9 +246,9 @@ export const stage6: Stage = {
   components: ['Client', 'API Gateway', 'Load Balancer', 'Server ×3', 'Database'],
   infoCard: {
     technicalTerm: 'Database Connection Pool Exhaustion',
-    whenHappens: 'When request rate outpaces database ability to handle concurrent connections. Typically hits at 10K+ RPS with a single DB instance.',
+    whenHappens: 'When request rate outpaces database ability to handle concurrent connections. Typically hits at 10K+ RPS.',
     whatCondition: 'The DB connection pool climbs to 95%. New queries wait in queue. Latency jumps from 45ms to 250ms. Errors start appearing. Servers are healthy. The database is the single bottleneck.',
-    howToResolve: 'Add a cache layer to absorb repetitive reads. 80% of queries are often for the same hot data. Serving those from cache eliminates 80% of DB load instantly.',
+    howToResolve: 'Add a cache layer to absorb repetitive reads. 80% of queries are often for the same hot data. Serving those from cache eliminates 80% of DB load.',
   },
   nodes: [
     { id: 'client', label: 'Client', type: 'client', x: 80, y: 220 },
@@ -215,8 +272,8 @@ export const stage6: Stage = {
   viewBox: '0 0 1300 440',
 }
 
-// Stage 7: Cache Layer (old stage-8)
-export const stage7: Stage = {
+// Stage 6: Cache Layer (old stage-8)
+export const stage6: Stage = {
   id: 'stage-8',
   title: 'Cache Layer',
   subtitle: 'Caching — Hit Rate 80%, Latency Drops',
@@ -226,9 +283,9 @@ export const stage7: Stage = {
   components: ['Client', 'API Gateway', 'Load Balancer', 'Server ×3', 'Cache ×3', 'Database'],
   infoCard: {
     technicalTerm: 'Read-Through Cache (Redis/Memcached)',
-    whenHappens: 'After identifying database as bottleneck. Cache sits between application servers and database. Servers check cache first before hitting DB.',
-    whatCondition: '80% of reads are cache hits — served in <5ms directly from memory. Only 20% of reads miss cache and query the DB. DB connection pool drops to 25%. Latency falls from 250ms to 35ms.',
-    howToResolve: 'Cache is highly effective for read-heavy workloads. At 1M concurrent users, a well-tuned cache with appropriate TTLs and invalidation can absorb 90%+ of read traffic, reducing DB to write and cache-miss traffic only.',
+    whenHappens: 'After identifying database as bottleneck. Cache sits between application servers and database.',
+    whatCondition: '80% of reads are cache hits served in <5ms. Only 20% of reads miss cache and query DB. DB connection pool drops to 25%. Latency falls from 250ms to 35ms.',
+    howToResolve: 'Cache is highly effective for read-heavy workloads. At scale, a well-tuned cache absorbs 90%+ of read traffic.',
   },
   nodes: [
     { id: 'client', label: 'Client', type: 'client', x: 120, y: 220 },
@@ -262,8 +319,8 @@ export const stage7: Stage = {
   viewBox: '0 0 1600 440',
 }
 
-// Stage 8: Cache Failure (old stage-9)
-export const stage8: Stage = {
+// Stage 7: Cache Failure (old stage-9)
+export const stage7: Stage = {
   id: 'stage-9',
   title: 'Cache Failure',
   subtitle: 'Cache Node Down — Hit Rate Degrades',
@@ -273,9 +330,9 @@ export const stage8: Stage = {
   components: ['Client', 'API Gateway', 'Load Balancer', 'Server ×3', 'Cache ×3', 'Database'],
   infoCard: {
     technicalTerm: 'Cache Node Failure / Cache Stampede Risk',
-    whenHappens: 'Cache nodes are in-memory systems — they can crash, restart, or lose data. Without redundancy, a single cache failure causes a flood of DB queries from cache-miss traffic.',
-    whatCondition: 'Cache-2 node dies. Hit rate drops from 80% to 40%. The DB receives double the queries. Latency climbs from 35ms back to 180ms. Connection pool usage spikes to 85%.',
-    howToResolve: 'Cache clusters with replication (Redis Sentinel or Redis Cluster). Keys distributed across multiple nodes. One node failure affects only ~33% of keys, not all. Auto-failover handles node replacement transparently.',
+    whenHappens: 'Cache nodes are in-memory systems. Without redundancy, a single failure causes a flood of DB queries.',
+    whatCondition: 'Cache-2 node dies. Hit rate drops 80% to 40%. DB receives double the queries. Latency climbs from 35ms back to 180ms. Connection pool usage spikes to 85%.',
+    howToResolve: 'Cache clusters with replication. Keys distributed across multiple nodes. One node failure affects only ~33% of keys.',
   },
   nodes: [
     { id: 'client', label: 'Client', type: 'client', x: 120, y: 220 },
@@ -309,8 +366,8 @@ export const stage8: Stage = {
   viewBox: '0 0 1600 440',
 }
 
-// Stage 9: Full Resilience (old stage-10)
-export const stage9: Stage = {
+// Stage 8: Full Resilience (old stage-10)
+export const stage8: Stage = {
   id: 'stage-10',
   title: 'Full Resilience',
   subtitle: 'Multi-Tier System — 15K RPS, Zero Errors',
@@ -320,9 +377,9 @@ export const stage9: Stage = {
   components: ['Client', 'API Gateway', 'Load Balancer', 'Server ×3', 'Cache ×3', 'Database'],
   infoCard: {
     technicalTerm: 'Multi-Tier Resilient Architecture',
-    whenHappens: 'The end state of systematic scaling. Each tier is redundant, monitored, and independently scalable.',
-    whatCondition: '15K RPS. API gateway handles auth and rate limiting. LB distributes across 3 healthy servers. Redis cluster absorbs 85% of reads with auto-failover. DB handles only 15% of queries. Zero errors.',
-    howToResolve: 'This architecture scales to 1M+ concurrent users by: auto-scaling server tier, Redis Cluster for cache, read replicas for DB, and CDN at the edge. Each component can be scaled or replaced independently.',
+    whenHappens: 'The end state of systematic scaling. Each tier is redundant, monitored, independently scalable.',
+    whatCondition: '15K RPS. API gateway handles auth and rate limiting. LB distributes across 3 healthy servers. Redis cluster absorbs 85% of reads. DB handles 15% of queries. Zero errors.',
+    howToResolve: 'This architecture scales to 1M+ users by: auto-scaling servers, Redis Cluster for cache, read replicas for DB, CDN at edge.',
   },
   nodes: [
     { id: 'client', label: 'Client', type: 'client', x: 120, y: 220 },
@@ -365,5 +422,4 @@ export const stages: Stage[] = [
   stage6,
   stage7,
   stage8,
-  stage9,
 ]
