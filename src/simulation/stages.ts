@@ -218,7 +218,7 @@ export const stage4: Stage = {
   viewBox: '0 0 1100 440',
 }
 
-// Shared cache node positions (used by stage5 fix, stage6, stage7)
+// Shared cache node positions (used by stage5 fix1, stage6)
 const cacheNodes = [
   { id: 'client', label: 'Client', type: 'client' as const, x: 60, y: 220 },
   { id: 'api-gateway', label: 'API Gateway', type: 'api-gateway' as const, x: 200, y: 220 },
@@ -230,6 +230,21 @@ const cacheNodes = [
   { id: 'cache-1', label: 'Cache 1', type: 'cache' as const, x: 760, y: 110 },
   { id: 'cache-2', label: 'Cache 2', type: 'cache' as const, x: 760, y: 220 },
   { id: 'cache-3', label: 'Cache 3', type: 'cache' as const, x: 760, y: 330 },
+  { id: 'database', label: 'Database', type: 'database' as const, x: 1060, y: 220 },
+]
+
+// Redis cluster nodes (used by stage5 fix3)
+const cacheClusterNodes = [
+  { id: 'client', label: 'Client', type: 'client' as const, x: 60, y: 220 },
+  { id: 'api-gateway', label: 'API Gateway', type: 'api-gateway' as const, x: 200, y: 220 },
+  { id: 'load-balancer', label: 'Load Balancer', type: 'load-balancer' as const, x: 350, y: 220 },
+  { id: 'server-1', label: 'Server 1', type: 'server' as const, x: 490, y: 110 },
+  { id: 'server-2', label: 'Server 2', type: 'server' as const, x: 490, y: 220 },
+  { id: 'server-3', label: 'Server 3', type: 'server' as const, x: 490, y: 330 },
+  { id: 'session-store', label: 'Session Store', type: 'session-store' as const, x: 640, y: 420 },
+  { id: 'cache-1', label: 'Node 1', type: 'cache-cluster' as const, x: 760, y: 110 },
+  { id: 'cache-2', label: 'Node 2', type: 'cache-cluster' as const, x: 760, y: 220 },
+  { id: 'cache-3', label: 'Node 3', type: 'cache-cluster' as const, x: 760, y: 330 },
   { id: 'database', label: 'Database', type: 'database' as const, x: 1060, y: 220 },
 ]
 
@@ -284,26 +299,30 @@ export const stage5: Stage = {
       howToResolve: 'Cache works — but it is a single point of failure. One cache node dies and hit rate collapses. Click to simulate.',
     },
     {
-      // Fix 2 (actually the next problem): Cache node failure — hit rate degrades
+      // Fix 2: Cache node failure — hit rate degrades
       nodes: cacheNodes,
       edges: cacheEdges,
       viewBox: cacheViewBox,
       engineId: 'stage-9',
       enterLabel: 'Simulate Cache Failure',
       description: 'Cache-2 node dies. Hit rate degrades 80%→40%. DB overwhelmed again.',
-      whatCondition: 'Cache-2 fails. All keys on that node miss. Hit rate drops 80%→40%. DB pool spikes back to 85%. Latency climbs to 180ms. Same bottleneck returns.',
+      technicalTerm: 'Cache Node Failure / Cache Stampede',
+      whenHappens: 'Cache nodes are in-memory systems. Without redundancy, single failure floods database with misses.',
+      whatCondition: 'Cache-2 fails (shown as dead with red X). All keys on that node miss. Hit rate drops 80%→40%. DB pool spikes back to 85%. Latency climbs to 180ms. Same bottleneck returns.',
       howToResolve: 'Use Redis Cluster with replication. Keys distributed across nodes with replicas. One node loss = ~33% miss rate, not 50%. Automatic recovery.',
     },
     {
       // Fix 3: Redis Cluster — resilient final state
-      nodes: cacheNodes,
+      nodes: cacheClusterNodes,
       edges: cacheEdges,
       viewBox: cacheViewBox,
       engineId: 'stage-cache-cluster',
       enterLabel: 'Add Redis Cluster',
       description: 'Redis Cluster with replication. Node failure only affects 33% of keys. Auto-recovery.',
-      whatCondition: '10K RPS. Cluster handles node loss gracefully. Hit rate stable at 85%. DB pool stays at 18%. Zero errors.',
-      howToResolve: 'Redis Cluster + replication factor 2 is production standard. Eliminates cache as a single failure domain.',
+      technicalTerm: 'Redis Cluster with Replication',
+      whenHappens: 'At scale, cache becomes critical. Single cache node failure must not degrade performance.',
+      whatCondition: '10K RPS. Cluster nodes (labeled Node 1/2/3) handle requests. Replication means one node loss = 33% keys affected (not 50%). Hit rate stable at 85%. DB pool stays at 18%. Zero errors.',
+      howToResolve: 'Redis Cluster + replication factor 2 is production standard. Eliminates cache as single failure domain. Keys hash-distributed across nodes.',
     },
   ],
   nodes: [

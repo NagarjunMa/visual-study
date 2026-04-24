@@ -4,9 +4,9 @@ export type NodeType =
   | 'database'
   | 'load-balancer'
   | 'cache'
+  | 'cache-cluster'
   | 'api-gateway'
   | 'session-store'
-  | 'cache-cluster'
 
 export type NodeHealth =
   | 'healthy'
@@ -66,6 +66,8 @@ export interface FixModeConfig {
   engineId: string
   enterLabel: string       // Button text to enter this fix mode
   description: string      // Short description shown in sidebar header
+  technicalTerm?: string   // Overrides infoCard.technicalTerm when in this mode
+  whenHappens?: string     // Overrides infoCard.whenHappens when in this mode
   whatCondition?: string   // Overrides infoCard.whatCondition when in this mode
   howToResolve?: string    // Overrides infoCard.howToResolve when in this mode
 }

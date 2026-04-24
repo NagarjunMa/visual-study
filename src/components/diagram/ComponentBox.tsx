@@ -44,6 +44,8 @@ function getStatusText(node: SimNode, metrics?: any, stageId?: string): string {
       return metrics.rps ? `${Math.round(metrics.rps / 3)} RPS/srv` : ''
     case 'cache':
       return metrics.cacheHitPct ? `${Math.round(metrics.cacheHitPct)}% hit` : ''
+    case 'cache-cluster':
+      return metrics.cacheHitPct ? `${Math.round(metrics.cacheHitPct)}% hit` : ''
     case 'api-gateway':
       return metrics.rejectedRPS ? `${Math.round(metrics.rejectedRPS)} rej` : ''
     case 'session-store':

@@ -14,6 +14,8 @@ export function InfoCard({ infoCard, fixModes, fixModeIndex, onAdvanceFix }: Inf
   const hasNextFix = inFixMode && fixModeIndex < fixModes.length - 1
 
   // Merge infoCard with active fix mode overrides
+  const technicalTerm = activeFix?.technicalTerm ?? infoCard.technicalTerm
+  const whenHappens = activeFix?.whenHappens ?? infoCard.whenHappens
   const whatCondition = activeFix?.whatCondition ?? infoCard.whatCondition
   const howToResolve = activeFix?.howToResolve ?? infoCard.howToResolve
 
@@ -22,13 +24,13 @@ export function InfoCard({ infoCard, fixModes, fixModeIndex, onAdvanceFix }: Inf
       {/* Technical Term */}
       <div className="border-t border-gray-800 pt-4">
         <div className="font-pixel text-sm text-cyan-500 tracking-widest mb-2">TECHNICAL TERM</div>
-        <div className="font-terminal text-base text-cyan-300">{infoCard.technicalTerm}</div>
+        <div className="font-terminal text-base text-cyan-300">{technicalTerm}</div>
       </div>
 
       {/* When Happens */}
       <div className="border-t border-gray-800 pt-3">
         <div className="font-pixel text-sm text-amber-500 tracking-widest mb-2">WHEN DOES THIS HAPPEN</div>
-        <p className="font-terminal text-sm text-gray-400 leading-relaxed">{infoCard.whenHappens}</p>
+        <p className="font-terminal text-sm text-gray-400 leading-relaxed">{whenHappens}</p>
       </div>
 
       {/* What Condition */}

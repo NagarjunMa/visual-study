@@ -29,9 +29,9 @@ function getNodeHealth(nodeId: string, stageId: string, metrics: Metrics): NodeH
     return 'dead'
   }
 
-  // Stage 9: cache nodes degrade
+  // Stage 9: cache-2 is dead (node failure)
   if (stageId === 'stage-9' && (nodeId.startsWith('cache-') || nodeId === 'cache')) {
-    if (nodeId === 'cache-2') return 'degraded'
+    if (nodeId === 'cache-2') return 'dead'
   }
 
   if (cpu >= 85) return 'overloaded'
