@@ -536,16 +536,6 @@ function getWaypoints(stageId: string): [number, number][] {
       ]
 
     case 'stage-7':
-      return [
-        [80, 220], // client
-        [280, 220], // api-gateway
-        [520, 220], // load-balancer
-        [750, 220], // server-2
-        [750, 220], // (dummy)
-        [1150, 220], // database
-      ]
-
-    case 'stage-7':
       // DB bottleneck: client → api-gw → lb → server → db
       return [[80, 220], [280, 220], [460, 220], [650, 220], [1050, 220]]
 
