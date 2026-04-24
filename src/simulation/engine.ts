@@ -188,6 +188,71 @@ function computeMetrics(stageId: string, tick: number): Metrics {
       }
     }
 
+    case 'stage-api-gw': {
+      // API Gateway problem: unfiltered traffic, no gateway, single stateless server
+      const progress = sigmoid(tick, 360)
+      const rps = 1000 + progress * (13000 - 1000)
+      const cpu = 15 + progress * 80   // ramps to 95%
+      const errorPct = cpu > 75 ? (cpu - 75) * 2 : 0
+      return {
+        rps: Math.round(rps),
+        latencyMs: Math.round(20 + progress * 380),
+        errorPct,
+        cpuPct: [Math.min(cpu, 95)],
+        cacheHitPct: 0,
+      }
+    }
+
+    case 'stage-agw-fix': {
+      // API Gateway fix: gateway in place, filters 20% bad traffic
+      return {
+        rps: 12000,
+        latencyMs: 42,
+        errorPct: 0,
+        cpuPct: [38],
+        cacheHitPct: 0,
+        rejectedRPS: 2400,
+        gatewayRPS: 9600,
+      }
+    }
+
+    case 'stage-loadbalancer': {
+      // Load Balancer problem: single server overloaded with API GW
+      const progress = sigmoid(tick, 300)
+      const rps = 1000 + progress * (10000 - 1000)
+      const cpu = 20 + progress * 78
+      const errorPct = cpu > 80 ? (cpu - 80) * 3 : 0
+      return {
+        rps: Math.round(rps),
+        latencyMs: Math.round(25 + progress * 475),
+        errorPct,
+        cpuPct: [Math.min(cpu, 98)],
+        cacheHitPct: 0,
+      }
+    }
+
+    case 'stage-lb-hotspot': {
+      // Load Balancer fix1: 3 servers added but no LB, hotspot on server-1
+      return {
+        rps: 9000,
+        latencyMs: 85,
+        errorPct: 3,
+        cpuPct: [72, 16, 12],
+        cacheHitPct: 0,
+      }
+    }
+
+    case 'stage-lb-balanced': {
+      // Load Balancer fix2: LB in place, even distribution across 3 servers
+      return {
+        rps: 9000,
+        latencyMs: 45,
+        errorPct: 0,
+        cpuPct: [30, 32, 28],
+        cacheHitPct: 0,
+      }
+    }
+
     default:
       return {
         rps: 0,
@@ -345,6 +410,29 @@ function spawnParticles(
       const serverY = toServer === 0 ? 110 : toServer === 1 ? 220 : 330
       waypoints = [[100, 220], [450, serverY], [850, 220]]
       color = '#22c55e'
+    } else if (stageId === 'stage-agw-fix') {
+      // API Gateway fix: 20% rejected at gateway, 80% pass through
+      if (Math.random() < 0.2) {
+        particleType = 'rejected'
+        waypoints = [[100, 220], [300, 220]]  // stop at api-gw
+        color = '#ef4444'
+        duration = 400
+      } else {
+        waypoints = [[100, 220], [300, 220], [560, 220], [920, 220]]
+        color = '#22c55e'
+      }
+    } else if (stageId === 'stage-lb-hotspot') {
+      // Hotspot without LB: 70% to server-1, 15% to server-2, 15% to server-3
+      const rand = Math.random()
+      const serverY = rand < 0.70 ? 110 : rand < 0.85 ? 220 : 330
+      waypoints = [[80, 220], [280, 220], [500, serverY], [950, 220]]
+      color = '#22c55e'
+    } else if (stageId === 'stage-lb-balanced') {
+      // Load Balancer balanced: even 33% each across 3 servers
+      const rand = Math.random()
+      const serverY = rand < 0.33 ? 110 : rand < 0.66 ? 220 : 330
+      waypoints = [[80, 220], [280, 220], [460, 220], [650, serverY], [1050, 220]]
+      color = '#22c55e'
     }
 
     newParticles.push({
@@ -454,6 +542,26 @@ function getWaypoints(stageId: string): [number, number][] {
         [850, 220], // database
       ]
     }
+
+    case 'stage-api-gw':
+      // client → server → db (+ session-store branch ignored for particle display)
+      return [[120, 220], [420, 220], [820, 220]]
+
+    case 'stage-agw-fix':
+      // client → api-gw → server → db
+      return [[100, 220], [300, 220], [560, 220], [920, 220]]
+
+    case 'stage-loadbalancer':
+      // client → api-gw → server → db
+      return [[100, 220], [300, 220], [560, 220], [920, 220]]
+
+    case 'stage-lb-hotspot':
+      // client → api-gw → server-? → db
+      return [[80, 220], [280, 220], [500, 110], [500, 220], [500, 330], [950, 220]]
+
+    case 'stage-lb-balanced':
+      // client → api-gw → lb → server-? → db
+      return [[80, 220], [280, 220], [460, 220], [650, 110], [650, 220], [650, 330], [1050, 220]]
 
     default:
       return []
