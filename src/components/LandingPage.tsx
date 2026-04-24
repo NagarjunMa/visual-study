@@ -5,15 +5,26 @@ interface LandingPageProps {
   stages: Stage[]
   currentStageIndex: number
   onLaunch: (stageIndex: number) => void
+  skipHero?: boolean
 }
 
-export function LandingPage({ stages, currentStageIndex, onLaunch }: LandingPageProps) {
+export function LandingPage({ stages, currentStageIndex, onLaunch, skipHero }: LandingPageProps) {
   const [selectedIndex, setSelectedIndex] = useState(currentStageIndex)
-  const [selectorVisible, setSelectorVisible] = useState(false)
+  const [selectorVisible, setSelectorVisible] = useState(skipHero ?? false)
   const [cardsAnimated, setCardsAnimated] = useState(false)
   const selectorRef = useRef<HTMLDivElement>(null)
 
+  // When returning from ESC, scroll directly to selector section
   useEffect(() => {
+    if (skipHero && selectorRef.current) {
+      selectorRef.current.scrollIntoView({ behavior: 'instant' })
+      setSelectorVisible(true)
+      setTimeout(() => setCardsAnimated(true), 50)
+    }
+  }, [skipHero])
+
+  useEffect(() => {
+    if (skipHero) return // already handled above
     const observer = new IntersectionObserver(
       entries => {
         entries.forEach(entry => {
@@ -32,7 +43,7 @@ export function LandingPage({ stages, currentStageIndex, onLaunch }: LandingPage
     }
 
     return () => observer.disconnect()
-  }, [selectorVisible])
+  }, [selectorVisible, skipHero])
 
   return (
     <div className="landing-overlay fixed inset-0 z-50 overflow-y-auto">

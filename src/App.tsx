@@ -10,6 +10,7 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(true)
   const [showSelector, setShowSelector] = useState(true)
   const [inFixMode, setInFixMode] = useState(false)
+  const [fromSimulation, setFromSimulation] = useState(false)
 
   const currentStage = stages[currentStageIndex]
 
@@ -35,6 +36,7 @@ function App() {
     setCurrentStageIndex(idx)
     setShowSelector(false)
     setIsPlaying(true)
+    setFromSimulation(false)
   }
 
   // Simulation view: sidebar + diagram split layout
@@ -54,7 +56,10 @@ function App() {
             <button
               className="esc-btn show"
               style={{ position: 'static', opacity: 1, transform: 'none' }}
-              onClick={() => setShowSelector(true)}
+              onClick={() => {
+                setShowSelector(true)
+                setFromSimulation(true)
+              }}
               aria-label="Back to selector"
             >
               <span className="esc-arrow">▶</span> ESC
@@ -122,6 +127,7 @@ function App() {
         stages={stages}
         currentStageIndex={currentStageIndex}
         onLaunch={handleLaunch}
+        skipHero={fromSimulation}
       />
     </div>
   )
