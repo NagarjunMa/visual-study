@@ -92,11 +92,11 @@ function computeMetrics(stageId: string, tick: number): Metrics {
     }
 
     case 'stage-7': {
-      // DB Bottleneck: 10K RPS, DB pool exhausted
+      // DB Bottleneck: 10K RPS with 3 servers hammering single DB
       const progress = sigmoid(tick, 360)
       const poolUsage = 30 + progress * 65 // 30% → 95%
       const latency = 45 + progress * 205 // 45ms → 250ms
-      const errors = progress > 0.6 ? (progress - 0.6) * 20 : 0 // 0% → ~8%
+      const errors = progress > 0.6 ? (progress - 0.6) * 20 : 0
       return {
         rps: 10000,
         latencyMs: Math.round(latency),
@@ -104,6 +104,18 @@ function computeMetrics(stageId: string, tick: number): Metrics {
         cpuPct: [30, 32, 28],
         cacheHitPct: 0,
         connectionPoolPct: poolUsage,
+      }
+    }
+
+    case 'stage-cache-layer': {
+      // Cache layer added: 80% hits, DB pool drops
+      return {
+        rps: 10000,
+        latencyMs: 35,
+        errorPct: 0,
+        cpuPct: [20, 22, 18],
+        cacheHitPct: 80,
+        connectionPoolPct: 25,
       }
     }
 
@@ -142,6 +154,18 @@ function computeMetrics(stageId: string, tick: number): Metrics {
         latencyMs: 28,
         errorPct: 0,
         cpuPct: [28, 30, 26],
+        cacheHitPct: 85,
+        connectionPoolPct: 18,
+      }
+    }
+
+    case 'stage-cache-cluster': {
+      // Cache cluster with replication: resilient, high hit rate, all healthy
+      return {
+        rps: 10000,
+        latencyMs: 35,
+        errorPct: 0,
+        cpuPct: [20, 22, 18],
         cacheHitPct: 85,
         connectionPoolPct: 18,
       }
@@ -433,6 +457,38 @@ function spawnParticles(
       const serverY = rand < 0.33 ? 110 : rand < 0.66 ? 220 : 330
       waypoints = [[80, 220], [280, 220], [460, 220], [650, serverY], [1050, 220]]
       color = '#22c55e'
+    } else if (stageId === 'stage-7') {
+      // DB Bottleneck: all servers hit same db (show bottleneck)
+      const rand = Math.random()
+      const serverY = rand < 0.33 ? 110 : rand < 0.66 ? 220 : 330
+      waypoints = [[80, 220], [280, 220], [460, 220], [650, serverY], [1050, 220]]
+      color = '#22c55e'
+    } else if (stageId === 'stage-cache-layer') {
+      // Cache layer: 80% hits, 20% miss
+      if (Math.random() < 0.8) {
+        particleType = 'cache-hit'
+        waypoints = [baseWaypoints[3], baseWaypoints[7]]  // server → cache
+        color = '#22c55e'
+        duration = 300
+      } else {
+        particleType = 'cache-miss'
+        waypoints = [baseWaypoints[3], baseWaypoints[7], baseWaypoints[9]]  // server → cache → db
+        color = '#f97316'
+        duration = 1200
+      }
+    } else if (stageId === 'stage-cache-cluster') {
+      // Cache cluster: 85% hits, 15% miss
+      if (Math.random() < 0.85) {
+        particleType = 'cache-hit'
+        waypoints = [baseWaypoints[3], baseWaypoints[7]]  // server → cache
+        color = '#22c55e'
+        duration = 300
+      } else {
+        particleType = 'cache-miss'
+        waypoints = [baseWaypoints[3], baseWaypoints[7], baseWaypoints[9]]  // server → cache → db
+        color = '#f97316'
+        duration = 1200
+      }
     }
 
     newParticles.push({
@@ -489,33 +545,54 @@ function getWaypoints(stageId: string): [number, number][] {
         [1150, 220], // database
       ]
 
+    case 'stage-7':
+      // DB bottleneck: client → api-gw → lb → server → db
+      return [[80, 220], [280, 220], [460, 220], [650, 220], [1050, 220]]
+
+    case 'stage-cache-layer':
+      return [
+        [60, 220],   // client
+        [200, 220],  // api-gateway
+        [350, 220],  // load-balancer
+        [490, 220],  // server-2
+        [490, 220],  // server-2 (duplicate)
+        [760, 220],  // cache-2
+        [1060, 220], // database (for misses)
+        [760, 220],  // cache-2 (index 7, for hit path)
+        [490, 220],  // server-2 (index 8, dummy)
+        [1060, 220], // database (index 9, for miss path)
+      ]
+
     case 'stage-8':
     case 'stage-9':
+    case 'stage-cache-cluster':
+      // Cache failure / cluster: same positions as cache layer
       return [
-        [120, 220], // client
-        [320, 220], // api-gateway
-        [540, 220], // load-balancer
-        [750, 220], // server-2
-        [750, 220], // server-2 (duplicate for path)
-        [1020, 220], // cache-2
-        [1350, 220], // database (for misses)
-        [1020, 220], // cache-2 (index 7, for hit path)
-        [750, 220], // server-2 (index 8, dummy)
-        [1350, 220], // database (index 9, for miss path)
+        [60, 220],   // client
+        [200, 220],  // api-gateway
+        [350, 220],  // load-balancer
+        [490, 220],  // server-2
+        [490, 220],  // server-2 (duplicate)
+        [760, 220],  // cache-2
+        [1060, 220], // database (for misses)
+        [760, 220],  // cache-2 (index 7, for hit path)
+        [490, 220],  // server-2 (index 8, dummy)
+        [1060, 220], // database (index 9, for miss path)
       ]
 
     case 'stage-10':
+      // Full resilience: same positions as cache layer
       return [
-        [120, 220], // client
-        [320, 220], // api-gateway
-        [540, 220], // load-balancer
-        [750, 220], // server-2
-        [750, 220], // server-2
-        [1020, 220], // cache-2
-        [1350, 220], // database
-        [1020, 220], // cache-2
-        [750, 220], // server-2
-        [1350, 220], // database
+        [60, 220],   // client
+        [200, 220],  // api-gateway
+        [350, 220],  // load-balancer
+        [490, 220],  // server-2
+        [490, 220],  // server-2
+        [760, 220],  // cache-2
+        [1060, 220], // database
+        [760, 220],  // cache-2
+        [490, 220],  // server-2
+        [1060, 220], // database
       ]
 
     case 'stage-api-problem': {
