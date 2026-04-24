@@ -61,7 +61,7 @@ function getStatusText(node: SimNode, metrics?: any, stageId?: string): string {
 }
 
 function renderIcon(type: string) {
-  const iconSize = 20
+  const iconSize = 16
   const iconProps = { width: iconSize, height: iconSize, viewBox: '0 0 24 24' }
 
   switch (type) {
@@ -204,22 +204,22 @@ export function ComponentBox({ node, metrics, stageId }: ComponentBoxProps) {
         <motion.circle
           cx={0}
           cy={0}
-          r={55}
+          r={44}
           fill="none"
           stroke={borderColor}
           strokeWidth={2}
-          animate={{ opacity: [0.2, 0.5, 0.2], r: [52, 58, 52] }}
+          animate={{ opacity: [0.2, 0.5, 0.2], r: [42, 46, 42] }}
           transition={{ duration: 1.2, repeat: Infinity }}
         />
       )}
 
       {/* Main box */}
       <motion.rect
-        x={-52}
-        y={-30}
-        width={104}
-        height={60}
-        rx={8}
+        x={-42}
+        y={-25}
+        width={84}
+        height={50}
+        rx={6}
         fill="#1f2937"
         stroke={borderColor}
         strokeWidth={health === 'overloaded' || health === 'dead' ? 3 : 2}
@@ -227,26 +227,26 @@ export function ComponentBox({ node, metrics, stageId }: ComponentBoxProps) {
 
       {/* Color header strip */}
       <rect
-        x={-52}
-        y={-30}
-        width={104}
-        height={6}
-        rx={8}
+        x={-42}
+        y={-25}
+        width={84}
+        height={5}
+        rx={6}
         fill={config.color}
         opacity={0.4}
       />
 
       {/* Icon */}
-      <g transform={`translate(-10, -17)`} color={config.color}>
+      <g transform={`translate(-8, -14)`} color={config.color}>
         {renderIcon(node.type)}
       </g>
 
       {/* Type label */}
       <text
         x={0}
-        y={4}
+        y={2}
         textAnchor="middle"
-        fontSize={11}
+        fontSize={9}
         fontWeight="bold"
         fill={borderColor}
         fontFamily="monospace"
@@ -258,9 +258,9 @@ export function ComponentBox({ node, metrics, stageId }: ComponentBoxProps) {
       {statusText && (
         <text
           x={0}
-          y={15}
+          y={11}
           textAnchor="middle"
-          fontSize={10}
+          fontSize={8}
           fill="#9ca3af"
           fontFamily="monospace"
         >
@@ -271,12 +271,12 @@ export function ComponentBox({ node, metrics, stageId }: ComponentBoxProps) {
       {/* Queue depth badge */}
       {queueDepth > 0 && (
         <g>
-          <rect x={22} y={-44} width={32} height={14} rx={4} fill="#ef4444" opacity={0.85} />
+          <rect x={18} y={-36} width={28} height={12} rx={3} fill="#ef4444" opacity={0.85} />
           <text
-            x={38}
-            y={-33}
+            x={32}
+            y={-27}
             textAnchor="middle"
-            fontSize={8}
+            fontSize={7}
             fontWeight="bold"
             fill="white"
             fontFamily="monospace"
@@ -289,17 +289,17 @@ export function ComponentBox({ node, metrics, stageId }: ComponentBoxProps) {
       {/* Dead state X */}
       {(health === 'dead' || health === 'not-ready') && (
         <>
-          <line x1={-20} y1={-14} x2={20} y2={14} stroke="#ef4444" strokeWidth={3} strokeLinecap="round" />
-          <line x1={20} y1={-14} x2={-20} y2={14} stroke="#ef4444" strokeWidth={3} strokeLinecap="round" />
+          <line x1={-16} y1={-11} x2={16} y2={11} stroke="#ef4444" strokeWidth={2.5} strokeLinecap="round" />
+          <line x1={16} y1={-11} x2={-16} y2={11} stroke="#ef4444" strokeWidth={2.5} strokeLinecap="round" />
         </>
       )}
 
       {/* Node label below */}
       <text
         x={0}
-        y={40}
+        y={32}
         textAnchor="middle"
-        fontSize={12}
+        fontSize={10}
         fill="#d1d5db"
         fontFamily="system-ui, sans-serif"
       >
