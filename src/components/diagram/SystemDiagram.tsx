@@ -13,8 +13,8 @@ interface SystemDiagramProps {
 
 // Compute node health based on metrics
 function getNodeHealth(nodeId: string, stageId: string, metrics: Metrics): NodeHealth {
-  // DB health from connection pool
-  if (nodeId === 'database' && metrics.connectionPoolPct !== undefined) {
+  // DB health from connection pool (both primary DB and replicas in replication mode)
+  if ((nodeId === 'database' || nodeId === 'db-primary') && metrics.connectionPoolPct !== undefined) {
     if (metrics.connectionPoolPct >= 90) return 'overloaded'
     if (metrics.connectionPoolPct >= 70) return 'stressed'
   }

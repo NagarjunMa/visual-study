@@ -148,14 +148,19 @@ function computeMetrics(stageId: string, tick: number): Metrics {
     }
 
     case 'stage-10': {
-      // Full Resilience: 15K RPS, all healthy, 85% hit, 28ms latency
+      // DB overload: 15K RPS overwhelms single database despite 85% cache hit
+      const progress = sigmoid(tick, 360)
+      const poolUsage = 60 + progress * 40 // 60% → 100%
+      const latency = 45 + progress * 755 // 45ms → 800ms
+      const errorPct = progress > 0.6 ? (progress - 0.6) * 12.5 : 0 // 0% → 5% errors
+      const hitRate = 85 - progress * 23 // 85% → 62% (hit rate degrades as DB times out)
       return {
         rps: 15000,
-        latencyMs: 28,
-        errorPct: 0,
-        cpuPct: [28, 30, 26],
-        cacheHitPct: 85,
-        connectionPoolPct: 18,
+        latencyMs: Math.round(latency),
+        errorPct,
+        cpuPct: [35, 38, 32],
+        cacheHitPct: Math.round(hitRate),
+        connectionPoolPct: Math.round(poolUsage),
       }
     }
 
@@ -166,6 +171,18 @@ function computeMetrics(stageId: string, tick: number): Metrics {
         latencyMs: 35,
         errorPct: 0,
         cpuPct: [20, 22, 18],
+        cacheHitPct: 85,
+        connectionPoolPct: 18,
+      }
+    }
+
+    case 'stage-db-replica': {
+      // DB replication: primary + 2 read replicas, load distributed
+      return {
+        rps: 15000,
+        latencyMs: 28,
+        errorPct: 0,
+        cpuPct: [28, 30, 26],
         cacheHitPct: 85,
         connectionPoolPct: 18,
       }
@@ -489,6 +506,33 @@ function spawnParticles(
         color = '#f97316'
         duration = 1200
       }
+    } else if (stageId === 'stage-10') {
+      // DB overload: hit rate degrading, more misses flood overloaded DB
+      const hitRate = Math.max(62, 85 - sigmoid(tick, 360) * 23)
+      if (Math.random() < hitRate / 100) {
+        particleType = 'cache-hit'
+        waypoints = [baseWaypoints[3], baseWaypoints[7]]  // server → cache
+        color = '#22c55e'
+        duration = 300
+      } else {
+        particleType = 'cache-miss'
+        waypoints = [baseWaypoints[3], baseWaypoints[7], baseWaypoints[9]]  // server → cache → db (overloaded)
+        color = '#f97316'
+        duration = 1200
+      }
+    } else if (stageId === 'stage-db-replica') {
+      // DB replication: 85% cache hits, 15% reads go to replicas
+      if (Math.random() < 0.85) {
+        particleType = 'cache-hit'
+        waypoints = [baseWaypoints[3], baseWaypoints[7]]  // server → cache
+        color = '#22c55e'
+        duration = 300
+      } else {
+        particleType = 'cache-miss'
+        waypoints = [baseWaypoints[3], baseWaypoints[7], baseWaypoints[9]]  // server → cache → replica
+        color = '#f97316'
+        duration = 1200
+      }
     }
 
     newParticles.push({
@@ -571,7 +615,7 @@ function getWaypoints(stageId: string): [number, number][] {
       ]
 
     case 'stage-10':
-      // Full resilience: same positions as cache layer
+      // DB overload: cache cluster positions, single DB at center
       return [
         [60, 220],   // client
         [200, 220],  // api-gateway
@@ -583,6 +627,21 @@ function getWaypoints(stageId: string): [number, number][] {
         [760, 220],  // cache-2
         [490, 220],  // server-2
         [1060, 220], // database
+      ]
+
+    case 'stage-db-replica':
+      // DB replication: replicas at y=255 (db-replica-1)
+      return [
+        [60, 220],   // client
+        [200, 220],  // api-gateway
+        [350, 220],  // load-balancer
+        [490, 220],  // server-2
+        [490, 220],  // server-2 (dup)
+        [760, 220],  // cache-2
+        [1060, 255], // db-replica-1
+        [760, 220],  // cache-2 (index 7, hit path)
+        [490, 220],  // server-2 (index 8, dummy)
+        [1060, 255], // db-replica-1 (index 9, miss path)
       ]
 
     case 'stage-api-problem': {

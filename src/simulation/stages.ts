@@ -271,6 +271,49 @@ const cacheEdges = [
 
 const cacheViewBox = '0 0 1200 470'
 
+// DB replication nodes (used by stage6 fix)
+const dbReplicationNodes = [
+  { id: 'client', label: 'Client', type: 'client' as const, x: 60, y: 220 },
+  { id: 'api-gateway', label: 'API Gateway', type: 'api-gateway' as const, x: 200, y: 220 },
+  { id: 'load-balancer', label: 'Load Balancer', type: 'load-balancer' as const, x: 350, y: 220 },
+  { id: 'server-1', label: 'Server 1', type: 'server' as const, x: 490, y: 110 },
+  { id: 'server-2', label: 'Server 2', type: 'server' as const, x: 490, y: 220 },
+  { id: 'server-3', label: 'Server 3', type: 'server' as const, x: 490, y: 330 },
+  { id: 'session-store', label: 'Session Store', type: 'session-store' as const, x: 640, y: 420 },
+  { id: 'cache-1', label: 'Node 1', type: 'cache-cluster' as const, x: 760, y: 110 },
+  { id: 'cache-2', label: 'Node 2', type: 'cache-cluster' as const, x: 760, y: 220 },
+  { id: 'cache-3', label: 'Node 3', type: 'cache-cluster' as const, x: 760, y: 330 },
+  { id: 'db-primary', label: 'DB Primary', type: 'database' as const, x: 1060, y: 110 },
+  { id: 'db-replica-1', label: 'Replica 1', type: 'db-replica' as const, x: 1060, y: 255 },
+  { id: 'db-replica-2', label: 'Replica 2', type: 'db-replica' as const, x: 1060, y: 380 },
+]
+
+// DB replication edges (used by stage6 fix)
+const dbReplicationEdges = [
+  { id: 'client-gw', from: 'client', to: 'api-gateway' },
+  { id: 'gw-lb', from: 'api-gateway', to: 'load-balancer' },
+  { id: 'lb-s1', from: 'load-balancer', to: 'server-1' },
+  { id: 'lb-s2', from: 'load-balancer', to: 'server-2' },
+  { id: 'lb-s3', from: 'load-balancer', to: 'server-3' },
+  { id: 's1-store', from: 'server-1', to: 'session-store' },
+  { id: 's2-store', from: 'server-2', to: 'session-store' },
+  { id: 's3-store', from: 'server-3', to: 'session-store' },
+  { id: 's1-cache1', from: 'server-1', to: 'cache-1' },
+  { id: 's1-cache2', from: 'server-1', to: 'cache-2' },
+  { id: 's2-cache1', from: 'server-2', to: 'cache-1' },
+  { id: 's2-cache2', from: 'server-2', to: 'cache-2' },
+  { id: 's2-cache3', from: 'server-2', to: 'cache-3' },
+  { id: 's3-cache2', from: 'server-3', to: 'cache-2' },
+  { id: 's3-cache3', from: 'server-3', to: 'cache-3' },
+  // Cache misses → read replicas, writes → primary
+  { id: 'cache1-dbp', from: 'cache-1', to: 'db-primary' },
+  { id: 'cache2-r1', from: 'cache-2', to: 'db-replica-1' },
+  { id: 'cache3-r2', from: 'cache-3', to: 'db-replica-2' },
+  // Async replication from primary to replicas
+  { id: 'dbp-r1', from: 'db-primary', to: 'db-replica-1' },
+  { id: 'dbp-r2', from: 'db-primary', to: 'db-replica-2' },
+]
+
 // Stage 5: DB Bottleneck → Cache Layer → Cache Failure → Cache Cluster
 export const stage5: Stage = {
   id: 'stage-7',
@@ -351,22 +394,36 @@ export const stage5: Stage = {
   viewBox: '0 0 1220 450',
 }
 
-// Stage 6: Full Resilience
+// Stage 6: Data Replication
 export const stage6: Stage = {
   id: 'stage-10',
-  title: 'Full Resilience',
-  subtitle: 'Multi-Tier System — 15K RPS, Zero Errors',
-  insight: '15K RPS. All healthy. 85% cache hit. 28ms latency. Built to scale to 1M.',
-  displayTitle: 'Full Resilience Architecture',
-  description: 'Complete multi-tier system. Every layer redundant. Scales to 1M+ concurrent users.',
-  components: ['Client', 'API Gateway', 'Load Balancer', 'Server ×3', 'Redis Cluster', 'Session Store', 'Database'],
+  title: 'Data Replication',
+  subtitle: 'DB Bottleneck → Primary + Read Replicas',
+  insight: 'Even with cache, single DB fails at 15K RPS. Replication solves it.',
+  displayTitle: 'Database Replication',
+  description: '15K RPS overwhelms single DB despite 85% cache hit rate. Add Primary + Read Replicas for full resilience.',
+  components: ['Client', 'API Gateway', 'Load Balancer', 'Server ×3', 'Redis Cluster', 'Session Store', 'DB Primary', 'DB Replicas ×2'],
   infoCard: {
-    technicalTerm: 'Multi-Tier Resilient Architecture',
-    whenHappens: 'End state of systematic scaling. Each tier is redundant, monitored, independently scalable.',
-    whatCondition: '15K RPS. API gateway handles rate limiting. LB distributes across 3 healthy servers. Redis cluster absorbs 85% reads. Session store handles auth. DB handles only 15% of queries. Zero errors.',
-    howToResolve: 'This architecture scales to 1M+ users via: auto-scaling server groups, Redis Cluster sharding, DB read replicas, CDN for static assets, and multi-region deployment.',
+    technicalTerm: 'Single Database Bottleneck / Write Amplification',
+    whenHappens: 'At 15K RPS with 85% cache hit rate, the remaining 15% of cache misses and all write operations (2,250+ queries/sec) overwhelm a single database server. Writes cannot be cached — every write hits the DB directly.',
+    whatCondition: 'DB connection pool saturates at 100%. Response time spikes to 800ms+. Cache misses pile up behind the DB queue, causing hit rate to degrade from 85% to 62%. Error rate climbs to 5%. All other layers healthy — the database tier is the single point of failure.',
+    howToResolve: 'Add database replication: one Primary DB handles all writes, Read Replicas handle all read queries. Cache misses route to read replicas. Primary asynchronously replicates data to replicas. Load is distributed across 3 DB nodes.',
   },
-  nodes: cacheNodes,
+  fixModes: [
+    {
+      nodes: dbReplicationNodes,
+      edges: dbReplicationEdges,
+      viewBox: cacheViewBox,
+      engineId: 'stage-db-replica',
+      enterLabel: 'Add DB Replication',
+      description: 'Primary DB for writes. 2 Read Replicas for reads. Async replication. Pool drops to 18%.',
+      technicalTerm: 'Primary-Replica Database Replication',
+      whenHappens: 'When read traffic overwhelms a single DB. Separate write path (Primary) from read path (Replicas). Each replica handles a fraction of read load.',
+      whatCondition: '15K RPS. Writes → DB Primary. Cache misses → Read Replicas. DB Primary replicates to Replica 1 & 2 asynchronously. Pool usage drops from 100% to 18% per node. Latency returns to 28ms. Zero errors. 85% cache hit rate stable.',
+      howToResolve: 'This is the full production architecture: API Gateway → LB → App Servers → Redis Cluster (cache) → Read Replicas. Primary DB handles writes only. Built to scale to 1M+ users.',
+    },
+  ],
+  nodes: cacheClusterNodes,
   edges: cacheEdges,
   viewBox: cacheViewBox,
 }

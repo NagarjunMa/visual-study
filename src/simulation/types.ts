@@ -2,6 +2,7 @@ export type NodeType =
   | 'client'
   | 'server'
   | 'database'
+  | 'db-replica'
   | 'load-balancer'
   | 'cache'
   | 'cache-cluster'

@@ -11,6 +11,7 @@ const typeConfig: Record<string, { color: string; name: string }> = {
   client: { color: '#3b82f6', name: 'CLIENT' },
   server: { color: '#22c55e', name: 'SERVER' },
   database: { color: '#0ea5e9', name: 'DATABASE' },
+  'db-replica': { color: '#86efac', name: 'DB REPLICA' },
   'load-balancer': { color: '#a855f7', name: 'LOAD BALANCER' },
   cache: { color: '#f59e0b', name: 'CACHE' },
   'api-gateway': { color: '#6366f1', name: 'API GATEWAY' },
@@ -39,6 +40,10 @@ function getStatusText(node: SimNode, metrics?: any, stageId?: string): string {
         return `Pool: ${Math.round(metrics.connectionPoolPct)}%`
       }
       return metrics.rps ? `${Math.round(metrics.rps / 3)} q/s` : ''
+    }
+    case 'db-replica': {
+      // Read replica status
+      return 'Read Replica'
     }
     case 'load-balancer':
       return metrics.rps ? `${Math.round(metrics.rps / 3)} RPS/srv` : ''
@@ -91,6 +96,20 @@ function renderIcon(type: string) {
           <line x1="6" y1="5" x2="6" y2="15" />
           <line x1="18" y1="5" x2="18" y2="15" />
           <ellipse cx="12" cy="15" rx="6" ry="2" />
+        </svg>
+      )
+
+    case 'db-replica':
+      return (
+        <svg {...iconProps} fill="none" stroke="currentColor" strokeWidth={1.5}>
+          {/* Cylinder with replication arrows */}
+          <ellipse cx="12" cy="5" rx="6" ry="2" />
+          <line x1="6" y1="5" x2="6" y2="15" />
+          <line x1="18" y1="5" x2="18" y2="15" />
+          <ellipse cx="12" cy="15" rx="6" ry="2" />
+          {/* Small double arrow indicating replica */}
+          <path d="M 8 10 L 7 9 L 8 8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M 16 10 L 17 11 L 16 12" fill="none" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       )
 
