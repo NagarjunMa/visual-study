@@ -42,9 +42,15 @@ function App() {
     return (
       <div className="flex w-full h-screen bg-gray-950 text-white overflow-hidden">
         {/* LEFT: InfoCard sidebar */}
-        <div className="flex-shrink-0 w-80 h-full overflow-y-auto border-r border-gray-800 bg-gray-950">
+        <div
+          className="flex-shrink-0 w-80 h-full overflow-y-auto bg-gray-950"
+          style={{
+            borderRight: '1px solid rgba(255,176,0,0.3)',
+            boxShadow: 'inset -2px 0 0 rgba(255,176,0,0.05), inset -1px 0 0 rgba(255,176,0,0.15)',
+          }}
+        >
           {/* ESC button at top of sidebar */}
-          <div className="p-3 border-b border-gray-800">
+          <div className="p-3" style={{ borderBottom: '1px solid rgba(255,176,0,0.2)' }}>
             <button
               className="esc-btn show"
               style={{ position: 'static', opacity: 1, transform: 'none' }}
@@ -56,7 +62,7 @@ function App() {
           </div>
 
           {/* Stage title */}
-          <div className="px-4 pt-4 pb-2 border-b border-gray-800">
+          <div className="px-4 pt-4 pb-2" style={{ borderBottom: '1px solid rgba(255,176,0,0.25)' }}>
             <div className="font-pixel text-xs text-gray-600 mb-1">SIMULATION</div>
             <div className="font-terminal text-xl text-amber-500">{currentStage.displayTitle}</div>
             {inFixMode && currentStage.fixMode && (

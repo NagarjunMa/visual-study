@@ -111,26 +111,26 @@ export function LandingPage({ stages, currentStageIndex, onLaunch }: LandingPage
                   }}
                 >
                   {/* Stage number and selection indicator */}
-                  <div className="stage-header flex justify-between items-start mb-2">
-                    <span className="font-pixel text-xs text-gray-600 tracking-widest">STAGE {idx + 1}</span>
+                  <div className="stage-header flex justify-between items-start mb-3">
+                    <span className="font-pixel text-xs text-gray-700 tracking-widest">STAGE {idx + 1}</span>
                     <span className={`font-pixel text-sm transition-opacity ${idx === selectedIndex ? 'opacity-100 text-green-400' : 'opacity-0'}`}>▶</span>
                   </div>
 
                   {/* Display title and description */}
                   <div className="stage-info flex-1">
-                    <span className={`block font-terminal text-lg leading-tight mb-1 transition-colors ${idx === selectedIndex ? 'text-amber-500' : 'text-amber-500'}`}>
+                    <span className={`block font-terminal text-2xl leading-tight mb-2 transition-colors ${idx === selectedIndex ? 'text-amber-500' : 'text-amber-500'}`}>
                       {stage.displayTitle}
                     </span>
-                    <span className="block font-terminal text-xs text-gray-400 mb-3 leading-relaxed">
+                    <span className="block font-terminal text-base text-gray-400 mb-3 leading-relaxed">
                       {stage.description}
                     </span>
 
                     {/* Components list */}
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1.5">
                       {stage.components.map(comp => (
                         <span
                           key={comp}
-                          className="font-pixel text-xs text-cyan-600 border border-cyan-900 px-1.5 py-0.5 bg-black/50 rounded"
+                          className="font-terminal text-sm text-cyan-600 border border-cyan-900 px-2 py-1 bg-black/50 rounded"
                         >
                           {comp}
                         </span>

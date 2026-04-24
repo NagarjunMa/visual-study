@@ -183,21 +183,21 @@ export function ComponentBox({ node, metrics, stageId }: ComponentBoxProps) {
         <motion.circle
           cx={0}
           cy={0}
-          r={95}
+          r={68}
           fill="none"
           stroke={borderColor}
           strokeWidth={2}
-          animate={{ opacity: [0.2, 0.5, 0.2], r: [92, 100, 92] }}
+          animate={{ opacity: [0.2, 0.5, 0.2], r: [65, 72, 65] }}
           transition={{ duration: 1.2, repeat: Infinity }}
         />
       )}
 
       {/* Main box */}
       <motion.rect
-        x={-90}
-        y={-50}
-        width={180}
-        height={100}
+        x={-65}
+        y={-38}
+        width={130}
+        height={76}
         rx={8}
         fill="#1f2937"
         stroke={borderColor}
@@ -206,9 +206,9 @@ export function ComponentBox({ node, metrics, stageId }: ComponentBoxProps) {
 
       {/* Color header strip */}
       <rect
-        x={-90}
-        y={-50}
-        width={180}
+        x={-65}
+        y={-38}
+        width={130}
         height={8}
         rx={8}
         fill={config.color}
@@ -216,7 +216,7 @@ export function ComponentBox({ node, metrics, stageId }: ComponentBoxProps) {
       />
 
       {/* Icon */}
-      <g transform={`translate(-6, -20)`} color={config.color}>
+      <g transform={`translate(-12, -20)`} color={config.color}>
         {renderIcon(node.type)}
       </g>
 
@@ -225,7 +225,7 @@ export function ComponentBox({ node, metrics, stageId }: ComponentBoxProps) {
         x={0}
         y={8}
         textAnchor="middle"
-        fontSize={10}
+        fontSize={14}
         fontWeight="bold"
         fill={borderColor}
         fontFamily="monospace"
@@ -237,9 +237,9 @@ export function ComponentBox({ node, metrics, stageId }: ComponentBoxProps) {
       {statusText && (
         <text
           x={0}
-          y={24}
+          y={22}
           textAnchor="middle"
-          fontSize={8}
+          fontSize={12}
           fill="#9ca3af"
           fontFamily="monospace"
         >
@@ -250,10 +250,10 @@ export function ComponentBox({ node, metrics, stageId }: ComponentBoxProps) {
       {/* Queue depth badge */}
       {queueDepth > 0 && (
         <g>
-          <rect x={40} y={-65} width={40} height={18} rx={4} fill="#ef4444" opacity={0.85} />
+          <rect x={28} y={-52} width={40} height={18} rx={4} fill="#ef4444" opacity={0.85} />
           <text
-            x={60}
-            y={-49}
+            x={48}
+            y={-36}
             textAnchor="middle"
             fontSize={9}
             fontWeight="bold"
@@ -268,17 +268,17 @@ export function ComponentBox({ node, metrics, stageId }: ComponentBoxProps) {
       {/* Dead state X */}
       {(health === 'dead' || health === 'not-ready') && (
         <>
-          <line x1={-30} y1={-20} x2={30} y2={20} stroke="#ef4444" strokeWidth={3} strokeLinecap="round" />
-          <line x1={30} y1={-20} x2={-30} y2={20} stroke="#ef4444" strokeWidth={3} strokeLinecap="round" />
+          <line x1={-25} y1={-18} x2={25} y2={18} stroke="#ef4444" strokeWidth={3} strokeLinecap="round" />
+          <line x1={25} y1={-18} x2={-25} y2={18} stroke="#ef4444" strokeWidth={3} strokeLinecap="round" />
         </>
       )}
 
       {/* Node label below */}
       <text
         x={0}
-        y={65}
+        y={52}
         textAnchor="middle"
-        fontSize={11}
+        fontSize={14}
         fill="#d1d5db"
         fontFamily="system-ui, sans-serif"
       >
