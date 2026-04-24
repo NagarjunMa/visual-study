@@ -256,31 +256,54 @@ const cacheEdges = [
 
 const cacheViewBox = '0 0 1200 470'
 
-// Stage 5: DB Bottleneck
+// Stage 5: DB Bottleneck → Cache Layer → Cache Failure → Cache Cluster
 export const stage5: Stage = {
   id: 'stage-7',
-  title: 'DB Bottleneck',
-  subtitle: 'All Servers Hammer Same DB — Pool Exhausted',
-  insight: '3 servers all hit same DB. Connection pool hits 95%. Latency 250ms.',
-  displayTitle: 'Database Bottleneck',
-  description: '3 servers all query same database. Connection pool saturates. Latency explodes.',
-  components: ['Client', 'API Gateway', 'Load Balancer', 'Server ×3', 'Session Store', 'Database'],
+  title: 'DB & Cache',
+  subtitle: 'DB Bottleneck → Cache → Cache Failure → Redis Cluster',
+  insight: '3 servers hammer DB. Add cache. Cache fails. Add cluster.',
+  displayTitle: 'Database & Cache Layer',
+  description: '3 servers saturate DB. Add cache layer. Then experience cache failure. Finally: Redis Cluster.',
+  components: ['Client', 'API Gateway', 'Load Balancer', 'Server ×3', 'Cache ×3', 'Session Store', 'Database'],
   infoCard: {
     technicalTerm: 'Database Connection Pool Exhaustion',
     whenHappens: 'When request rate outpaces database ability to handle concurrent connections. Typically at 10K+ RPS with multiple application servers.',
-    whatCondition: 'All 3 servers hit the same DB simultaneously. Connection pool climbs to 95%. New queries wait in queue. Latency jumps from 45ms to 250ms. Servers are healthy. Database is the bottleneck.',
+    whatCondition: 'All 3 servers hit same DB simultaneously. Connection pool climbs to 95%. New queries wait in queue. Latency jumps from 45ms to 250ms. Servers healthy. Database is the bottleneck.',
     howToResolve: 'Add a cache layer (Redis) between servers and DB. 80% of reads are repetitive hot data. Serving from cache eliminates 80% of DB queries instantly.',
   },
   fixModes: [
     {
+      // Fix 1: Add cache layer
       nodes: cacheNodes,
       edges: cacheEdges,
       viewBox: cacheViewBox,
       engineId: 'stage-cache-layer',
       enterLabel: 'Add Cache Layer',
-      description: 'Redis cache added. 80% reads served from cache. DB pool drops to 25%. Latency 35ms.',
+      description: 'Redis cache added. 80% reads from cache. DB pool drops to 25%. Latency 35ms.',
       whatCondition: '10K RPS. 80% cache hits served in <5ms. Only 20% reach DB. Pool usage drops from 95% to 25%.',
-      howToResolve: 'Cache is extremely effective for read-heavy workloads. Well-tuned cache absorbs 90%+ of read traffic.',
+      howToResolve: 'Cache works — but it is a single point of failure. One cache node dies and hit rate collapses. Click to simulate.',
+    },
+    {
+      // Fix 2 (actually the next problem): Cache node failure — hit rate degrades
+      nodes: cacheNodes,
+      edges: cacheEdges,
+      viewBox: cacheViewBox,
+      engineId: 'stage-9',
+      enterLabel: 'Simulate Cache Failure',
+      description: 'Cache-2 node dies. Hit rate degrades 80%→40%. DB overwhelmed again.',
+      whatCondition: 'Cache-2 fails. All keys on that node miss. Hit rate drops 80%→40%. DB pool spikes back to 85%. Latency climbs to 180ms. Same bottleneck returns.',
+      howToResolve: 'Use Redis Cluster with replication. Keys distributed across nodes with replicas. One node loss = ~33% miss rate, not 50%. Automatic recovery.',
+    },
+    {
+      // Fix 3: Redis Cluster — resilient final state
+      nodes: cacheNodes,
+      edges: cacheEdges,
+      viewBox: cacheViewBox,
+      engineId: 'stage-cache-cluster',
+      enterLabel: 'Add Redis Cluster',
+      description: 'Redis Cluster with replication. Node failure only affects 33% of keys. Auto-recovery.',
+      whatCondition: '10K RPS. Cluster handles node loss gracefully. Hit rate stable at 85%. DB pool stays at 18%. Zero errors.',
+      howToResolve: 'Redis Cluster + replication factor 2 is production standard. Eliminates cache as a single failure domain.',
     },
   ],
   nodes: [
@@ -309,47 +332,15 @@ export const stage5: Stage = {
   viewBox: '0 0 1220 450',
 }
 
-// Stage 6: Cache Failure
+// Stage 6: Full Resilience
 export const stage6: Stage = {
-  id: 'stage-9',
-  title: 'Cache Failure',
-  subtitle: 'Cache Node Down — Hit Rate Degrades, DB Overwhelmed',
-  insight: 'Cache-2 dies. Hit rate drops 80%→40%. DB pool spikes to 85%.',
-  displayTitle: 'Cache Node Failure',
-  description: 'One cache node dies. Hit rate degrades 80%→40%. DB overwhelmed with queries.',
-  components: ['Client', 'API Gateway', 'Load Balancer', 'Server ×3', 'Cache ×3', 'Session Store', 'Database'],
-  infoCard: {
-    technicalTerm: 'Cache Node Failure / Cache Stampede',
-    whenHappens: 'Cache nodes are in-memory systems. No redundancy means single failure floods the database with all misses.',
-    whatCondition: 'Cache-2 node dies. All keys on that node miss. Hit rate drops 80% to 40%. DB receives double query load. Latency climbs from 35ms back to 180ms. DB pool spikes to 85%.',
-    howToResolve: 'Use Redis Cluster with replication. Keys distributed across multiple nodes with replicas. One node failure affects only ~33% of keys. Replicas serve stale data while rebuilding.',
-  },
-  fixModes: [
-    {
-      nodes: cacheNodes,
-      edges: cacheEdges,
-      viewBox: cacheViewBox,
-      engineId: 'stage-cache-cluster',
-      enterLabel: 'Add Cache Cluster',
-      description: 'Redis Cluster with replication. Node failure affects only 33% of keys. Replicas serve during rebuild.',
-      whatCondition: '10K RPS. Cluster replication means one node loss = 33% temporary hit rate drop (not 50%). Recovery automatic.',
-      howToResolve: 'Redis Cluster + replication factor 2 is production standard. Eliminates single cache as failure domain.',
-    },
-  ],
-  nodes: cacheNodes,
-  edges: cacheEdges,
-  viewBox: cacheViewBox,
-}
-
-// Stage 7: Full Resilience
-export const stage7: Stage = {
   id: 'stage-10',
   title: 'Full Resilience',
   subtitle: 'Multi-Tier System — 15K RPS, Zero Errors',
   insight: '15K RPS. All healthy. 85% cache hit. 28ms latency. Built to scale to 1M.',
   displayTitle: 'Full Resilience Architecture',
   description: 'Complete multi-tier system. Every layer redundant. Scales to 1M+ concurrent users.',
-  components: ['Client', 'API Gateway', 'Load Balancer', 'Server ×3', 'Cache Cluster', 'Session Store', 'Database'],
+  components: ['Client', 'API Gateway', 'Load Balancer', 'Server ×3', 'Redis Cluster', 'Session Store', 'Database'],
   infoCard: {
     technicalTerm: 'Multi-Tier Resilient Architecture',
     whenHappens: 'End state of systematic scaling. Each tier is redundant, monitored, independently scalable.',
@@ -368,5 +359,4 @@ export const stages: Stage[] = [
   stage4,
   stage5,
   stage6,
-  stage7,
 ]
