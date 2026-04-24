@@ -283,9 +283,9 @@ const dbReplicationNodes = [
   { id: 'cache-1', label: 'Node 1', type: 'cache-cluster' as const, x: 760, y: 110 },
   { id: 'cache-2', label: 'Node 2', type: 'cache-cluster' as const, x: 760, y: 220 },
   { id: 'cache-3', label: 'Node 3', type: 'cache-cluster' as const, x: 760, y: 330 },
-  { id: 'db-primary', label: 'DB Primary', type: 'database' as const, x: 1060, y: 110 },
-  { id: 'db-replica-1', label: 'Replica 1', type: 'db-replica' as const, x: 1060, y: 255 },
-  { id: 'db-replica-2', label: 'Replica 2', type: 'db-replica' as const, x: 1060, y: 380 },
+  { id: 'db-primary', label: 'DB Primary', type: 'database' as const, x: 1060, y: 130 },
+  { id: 'db-replica-1', label: 'Replica 1', type: 'db-replica' as const, x: 1060, y: 275 },
+  { id: 'db-replica-2', label: 'Replica 2', type: 'db-replica' as const, x: 1060, y: 395 },
 ]
 
 // DB replication edges (used by stage6 fix)

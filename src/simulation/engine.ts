@@ -630,7 +630,7 @@ function getWaypoints(stageId: string): [number, number][] {
       ]
 
     case 'stage-db-replica':
-      // DB replication: replicas at y=255 (db-replica-1)
+      // DB replication: primary at y=130, replicas at y=275 (db-replica-1)
       return [
         [60, 220],   // client
         [200, 220],  // api-gateway
@@ -638,10 +638,10 @@ function getWaypoints(stageId: string): [number, number][] {
         [490, 220],  // server-2
         [490, 220],  // server-2 (dup)
         [760, 220],  // cache-2
-        [1060, 255], // db-replica-1
+        [1060, 275], // db-replica-1
         [760, 220],  // cache-2 (index 7, hit path)
         [490, 220],  // server-2 (index 8, dummy)
-        [1060, 255], // db-replica-1 (index 9, miss path)
+        [1060, 275], // db-replica-1 (index 9, miss path)
       ]
 
     case 'stage-api-problem': {
