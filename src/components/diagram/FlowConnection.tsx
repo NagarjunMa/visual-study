@@ -9,25 +9,36 @@ function findNode(nodes: SimNode[], id: string): SimNode | undefined {
   return nodes.find(n => n.id === id)
 }
 
+const BOX_HALF_W = 42  // matches ComponentBox width ±42
+const BOX_HALF_H = 25  // matches ComponentBox height ±25
+
 export function FlowConnection({ edge, nodes }: FlowConnectionProps) {
   const from = findNode(nodes, edge.from)
   const to = findNode(nodes, edge.to)
 
   if (!from || !to) return null
 
-  // Source: right edge of from node
-  const x1 = from.x + 90
-  const y1 = from.y
-  // Target: left edge of to node
-  const x2 = to.x - 90
-  const y2 = to.y
+  const dx = to.x - from.x
+  const dy = to.y - from.y
+  let d: string
 
-  // Quadratic curve control points
-  const cx = x1 + (x2 - x1) * 0.5
-  const cy1 = y1
-  const cy2 = y2
-
-  const d = `M ${x1} ${y1} C ${cx} ${cy1}, ${cx} ${cy2}, ${x2} ${y2}`
+  if (Math.abs(dy) > Math.abs(dx)) {
+    // Vertical edge (replication / session-store downward flows)
+    const x1 = from.x
+    const y1 = dy > 0 ? from.y + BOX_HALF_H : from.y - BOX_HALF_H
+    const x2 = to.x
+    const y2 = dy > 0 ? to.y - BOX_HALF_H : to.y + BOX_HALF_H
+    const mid = y1 + (y2 - y1) * 0.5
+    d = `M ${x1} ${y1} C ${x1} ${mid}, ${x2} ${mid}, ${x2} ${y2}`
+  } else {
+    // Horizontal edge (left-to-right data flow)
+    const x1 = from.x + BOX_HALF_W
+    const y1 = from.y
+    const x2 = to.x - BOX_HALF_W
+    const y2 = to.y
+    const cx = x1 + (x2 - x1) * 0.5
+    d = `M ${x1} ${y1} C ${cx} ${y1}, ${cx} ${y2}, ${x2} ${y2}`
+  }
 
   return (
     <>
@@ -35,7 +46,7 @@ export function FlowConnection({ edge, nodes }: FlowConnectionProps) {
       <path
         d={d}
         stroke="#111827"
-        strokeWidth={4}
+        strokeWidth={3}
         fill="none"
         opacity={0.5}
       />
@@ -43,8 +54,8 @@ export function FlowConnection({ edge, nodes }: FlowConnectionProps) {
       <path
         d={d}
         stroke="#374151"
-        strokeWidth={2}
-        strokeDasharray="12 8"
+        strokeWidth={1.5}
+        strokeDasharray="8 6"
         fill="none"
         markerEnd="url(#arrowhead)"
         opacity={0.8}

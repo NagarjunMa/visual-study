@@ -254,16 +254,12 @@ const cacheEdges = [
   { id: 'lb-s1', from: 'load-balancer', to: 'server-1' },
   { id: 'lb-s2', from: 'load-balancer', to: 'server-2' },
   { id: 'lb-s3', from: 'load-balancer', to: 'server-3' },
-  { id: 's1-store', from: 'server-1', to: 'session-store' },
   { id: 's2-store', from: 'server-2', to: 'session-store' },
-  { id: 's3-store', from: 'server-3', to: 'session-store' },
+  // Direct one-to-one server → cache (no cross-connections)
   { id: 's1-cache1', from: 'server-1', to: 'cache-1' },
-  { id: 's1-cache2', from: 'server-1', to: 'cache-2' },
-  { id: 's2-cache1', from: 'server-2', to: 'cache-1' },
   { id: 's2-cache2', from: 'server-2', to: 'cache-2' },
-  { id: 's2-cache3', from: 'server-2', to: 'cache-3' },
-  { id: 's3-cache2', from: 'server-3', to: 'cache-2' },
   { id: 's3-cache3', from: 'server-3', to: 'cache-3' },
+  // Cache → DB misses
   { id: 'cache1-db', from: 'cache-1', to: 'database' },
   { id: 'cache2-db', from: 'cache-2', to: 'database' },
   { id: 'cache3-db', from: 'cache-3', to: 'database' },
@@ -295,21 +291,16 @@ const dbReplicationEdges = [
   { id: 'lb-s1', from: 'load-balancer', to: 'server-1' },
   { id: 'lb-s2', from: 'load-balancer', to: 'server-2' },
   { id: 'lb-s3', from: 'load-balancer', to: 'server-3' },
-  { id: 's1-store', from: 'server-1', to: 'session-store' },
   { id: 's2-store', from: 'server-2', to: 'session-store' },
-  { id: 's3-store', from: 'server-3', to: 'session-store' },
+  // Direct one-to-one server → cache cluster (no cross-connections)
   { id: 's1-cache1', from: 'server-1', to: 'cache-1' },
-  { id: 's1-cache2', from: 'server-1', to: 'cache-2' },
-  { id: 's2-cache1', from: 'server-2', to: 'cache-1' },
   { id: 's2-cache2', from: 'server-2', to: 'cache-2' },
-  { id: 's2-cache3', from: 'server-2', to: 'cache-3' },
-  { id: 's3-cache2', from: 'server-3', to: 'cache-2' },
   { id: 's3-cache3', from: 'server-3', to: 'cache-3' },
-  // Cache misses → read replicas, writes → primary
+  // Cache → DB/replicas (one cache per replica for clarity)
   { id: 'cache1-dbp', from: 'cache-1', to: 'db-primary' },
   { id: 'cache2-r1', from: 'cache-2', to: 'db-replica-1' },
   { id: 'cache3-r2', from: 'cache-3', to: 'db-replica-2' },
-  // Async replication from primary to replicas
+  // Async replication from primary to replicas (vertical)
   { id: 'dbp-r1', from: 'db-primary', to: 'db-replica-1' },
   { id: 'dbp-r2', from: 'db-primary', to: 'db-replica-2' },
 ]
@@ -384,9 +375,7 @@ export const stage5: Stage = {
     { id: 'lb-s1', from: 'load-balancer', to: 'server-1' },
     { id: 'lb-s2', from: 'load-balancer', to: 'server-2' },
     { id: 'lb-s3', from: 'load-balancer', to: 'server-3' },
-    { id: 's1-store', from: 'server-1', to: 'session-store' },
     { id: 's2-store', from: 'server-2', to: 'session-store' },
-    { id: 's3-store', from: 'server-3', to: 'session-store' },
     { id: 's1-db', from: 'server-1', to: 'database' },
     { id: 's2-db', from: 'server-2', to: 'database' },
     { id: 's3-db', from: 'server-3', to: 'database' },
