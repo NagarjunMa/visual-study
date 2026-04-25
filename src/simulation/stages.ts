@@ -418,6 +418,45 @@ export const stage6: Stage = {
   viewBox: replicaViewBox,
 }
 
+// Stage 7: Redis Key-Value Store
+export const stageRedis: Stage = {
+  id: 'stage-redis-kv',
+  title: 'Redis Key-Value Store',
+  subtitle: 'Hash Table + LRU Cache — Volatile vs Persistent',
+  insight: 'Data stored in RAM only. Crash = total loss. Persistence modes protect data.',
+  displayTitle: 'Redis KV Store Internals',
+  description: 'Hash table with LRU eviction. See how persistence modes (RDB/AOF) prevent data loss.',
+  components: ['Client', 'Redis', 'Hash Table', 'LRU List', 'Disk'],
+  moduleType: 'redis-kv',
+  infoCard: {
+    technicalTerm: 'Redis Hash Table + LRU Eviction',
+    whenHappens: 'Every SET writes to RAM. LRU evicts oldest entry when capacity exceeded. GET checks key.',
+    whatCondition: 'No persistence: crash = complete data loss. RDB: snapshot to disk (periodic). AOF: write log (full recovery).',
+    howToResolve: 'Enable persistence. RDB for snapshots (fast recovery, some loss), AOF for durability (replay all writes).',
+  },
+  fixModes: [
+    {
+      engineId: 'redis-rdb',
+      enterLabel: 'Enable RDB',
+      description: 'RDB snapshots — periodic backups to disk. Faster, but lose writes since last snapshot.',
+      nodes: [], edges: [], viewBox: '0 0 1200 600',
+      whatCondition: 'RDB snapshot saves all data to dump.rdb. On crash, replay from last snapshot. Data since snapshot is lost.',
+      howToResolve: 'RDB is fast recovery. Trade: data loss window = time since last snapshot (~30 seconds in production).',
+    },
+    {
+      engineId: 'redis-aof',
+      enterLabel: 'Enable AOF',
+      description: 'AOF (Append-Only File) — log every write. Full recovery but slower.',
+      nodes: [], edges: [], viewBox: '0 0 1200 600',
+      whatCondition: 'AOF appends every SET command to appendonly.aof. On crash, replay entire log = full recovery (or near-full).',
+      howToResolve: 'AOF is durable. Trade: write amplification — every SET is a disk write. Can use fsync=everysec for balance.',
+    },
+  ],
+  nodes: [],
+  edges: [],
+  viewBox: '0 0 1200 600',
+}
+
 export const stages: Stage[] = [
   stage1,
   stage2,
@@ -425,4 +464,5 @@ export const stages: Stage[] = [
   stage4,
   stage5,
   stage6,
+  stageRedis,
 ]

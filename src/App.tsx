@@ -4,6 +4,7 @@ import { useSimulation } from './simulation/engine'
 import { SystemDiagram } from './components/diagram/SystemDiagram'
 import { LandingPage } from './components/LandingPage'
 import { InfoCard } from './components/InfoCard'
+import { RedisSimulation } from './modules/redis/RedisSimulation'
 
 function App() {
   const [currentStageIndex, setCurrentStageIndex] = useState(0)
@@ -90,35 +91,41 @@ function App() {
 
         {/* RIGHT: Simulation area */}
         <div className="flex-1 relative overflow-hidden">
-          {/* Metrics HUD — top-right of simulation area */}
-          <div className="metrics-hud show" style={{ position: 'absolute' }}>
-            <div className="metrics-header">SYSTEM METRICS</div>
-            <div className="metrics-row ok"><span>RPS</span><span className="val">{metrics.rps >= 1000 ? (metrics.rps / 1000).toFixed(1) + 'k' : metrics.rps}</span></div>
-            <div className="metrics-row ok"><span>LATENCY</span><span className="val">{Number.isFinite(metrics.latencyMs) ? metrics.latencyMs + 'ms' : '∞'}</span></div>
-            <div className={`metrics-row ${metrics.errorPct > 0 ? 'err' : 'ok'}`}><span>ERROR RATE</span><span className="val">{metrics.errorPct.toFixed(1)}%</span></div>
-            <div className="metrics-row ok"><span>CPU (avg)</span><span className="val">{(metrics.cpuPct.reduce((a, b) => a + b, 0) / metrics.cpuPct.length).toFixed(0)}%</span></div>
-            {metrics.cacheHitPct !== undefined && metrics.cacheHitPct > 0 && (
-              <div className="metrics-row ok"><span>CACHE HIT</span><span className="val">{metrics.cacheHitPct.toFixed(0)}%</span></div>
-            )}
-            {metrics.connectionPoolPct !== undefined && (
-              <div className={`metrics-row ${metrics.connectionPoolPct > 80 ? 'err' : 'warn'}`}><span>DB POOL</span><span className="val">{metrics.connectionPoolPct.toFixed(0)}%</span></div>
-            )}
-            <button
-              className="pause-btn"
-              onClick={() => setIsPlaying(p => !p)}
-            >
-              {isPlaying ? '⏸ PAUSE' : '▶ PLAY'}
-            </button>
-          </div>
+          {/* Metrics HUD — only for system design stages */}
+          {!currentStage.moduleType && (
+            <div className="metrics-hud show" style={{ position: 'absolute' }}>
+              <div className="metrics-header">SYSTEM METRICS</div>
+              <div className="metrics-row ok"><span>RPS</span><span className="val">{metrics.rps >= 1000 ? (metrics.rps / 1000).toFixed(1) + 'k' : metrics.rps}</span></div>
+              <div className="metrics-row ok"><span>LATENCY</span><span className="val">{Number.isFinite(metrics.latencyMs) ? metrics.latencyMs + 'ms' : '∞'}</span></div>
+              <div className={`metrics-row ${metrics.errorPct > 0 ? 'err' : 'ok'}`}><span>ERROR RATE</span><span className="val">{metrics.errorPct.toFixed(1)}%</span></div>
+              <div className="metrics-row ok"><span>CPU (avg)</span><span className="val">{(metrics.cpuPct.reduce((a, b) => a + b, 0) / metrics.cpuPct.length).toFixed(0)}%</span></div>
+              {metrics.cacheHitPct !== undefined && metrics.cacheHitPct > 0 && (
+                <div className="metrics-row ok"><span>CACHE HIT</span><span className="val">{metrics.cacheHitPct.toFixed(0)}%</span></div>
+              )}
+              {metrics.connectionPoolPct !== undefined && (
+                <div className={`metrics-row ${metrics.connectionPoolPct > 80 ? 'err' : 'warn'}`}><span>DB POOL</span><span className="val">{metrics.connectionPoolPct.toFixed(0)}%</span></div>
+              )}
+              <button
+                className="pause-btn"
+                onClick={() => setIsPlaying(p => !p)}
+              >
+                {isPlaying ? '⏸ PAUSE' : '▶ PLAY'}
+              </button>
+            </div>
+          )}
 
-          {/* Simulation diagram */}
-          <SystemDiagram
-            stage={diagramStage}
-            particles={particles}
-            metrics={metrics}
-            tick={tick}
-            showStatefulBubble={currentStage.id === 'stage-2' && fixModeIndex < 0}
-          />
+          {/* Conditional renderer: module vs system design */}
+          {currentStage.moduleType === 'redis-kv' ? (
+            <RedisSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
+          ) : (
+            <SystemDiagram
+              stage={diagramStage}
+              particles={particles}
+              metrics={metrics}
+              tick={tick}
+              showStatefulBubble={currentStage.id === 'stage-2' && fixModeIndex < 0}
+            />
+          )}
         </div>
       </div>
     )

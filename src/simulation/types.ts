@@ -86,4 +86,5 @@ export interface Stage {
   nodes: SimNode[]
   edges: SimEdge[]
   viewBox: string
+  moduleType?: 'btree' | 'lsm' | 'redis-kv'  // For data structure modules (vs system design)
 }
