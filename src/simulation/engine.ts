@@ -586,62 +586,62 @@ function getWaypoints(stageId: string): [number, number][] {
     case 'stage-cache-layer':
       return [
         [60, 220],   // client
-        [200, 220],  // api-gateway
-        [350, 220],  // load-balancer
-        [490, 220],  // server-2
-        [490, 220],  // server-2 (duplicate)
-        [760, 220],  // cache-2
-        [1060, 220], // database (for misses)
-        [760, 220],  // cache-2 (index 7, for hit path)
-        [490, 220],  // server-2 (index 8, dummy)
-        [1060, 220], // database (index 9, for miss path)
+        [180, 220],  // api-gateway
+        [310, 220],  // load-balancer
+        [440, 220],  // server-2
+        [440, 220],  // server-2 (duplicate)
+        [620, 220],  // cache-2
+        [800, 220],  // database (for misses)
+        [620, 220],  // cache-2 (index 7, for hit path)
+        [440, 220],  // server-2 (index 8, dummy)
+        [800, 220],  // database (index 9, for miss path)
       ]
 
     case 'stage-8':
     case 'stage-9':
     case 'stage-cache-cluster':
-      // Cache failure / cluster: same positions as cache layer
+      // Cache failure / cluster: compressed positions (cacheClusterNodes)
       return [
         [60, 220],   // client
-        [200, 220],  // api-gateway
-        [350, 220],  // load-balancer
-        [490, 220],  // server-2
-        [490, 220],  // server-2 (duplicate)
-        [760, 220],  // cache-2
-        [1060, 220], // database (for misses)
-        [760, 220],  // cache-2 (index 7, for hit path)
-        [490, 220],  // server-2 (index 8, dummy)
-        [1060, 220], // database (index 9, for miss path)
+        [180, 220],  // api-gateway
+        [310, 220],  // load-balancer
+        [440, 220],  // server-2
+        [440, 220],  // server-2 (duplicate)
+        [620, 220],  // cache-2
+        [800, 220],  // database (for misses)
+        [620, 220],  // cache-2 (index 7, for hit path)
+        [440, 220],  // server-2 (index 8, dummy)
+        [800, 220],  // database (index 9, for miss path)
       ]
 
     case 'stage-10':
-      // DB overload: cache cluster positions, single DB at center
+      // DB overload: compressed positions, single DB at x=800
       return [
         [60, 220],   // client
-        [200, 220],  // api-gateway
-        [350, 220],  // load-balancer
-        [490, 220],  // server-2
-        [490, 220],  // server-2
-        [760, 220],  // cache-2
-        [1060, 220], // database
-        [760, 220],  // cache-2
-        [490, 220],  // server-2
-        [1060, 220], // database
+        [180, 220],  // api-gateway
+        [310, 220],  // load-balancer
+        [440, 220],  // server-2
+        [440, 220],  // server-2
+        [620, 220],  // cache-2
+        [800, 220],  // database
+        [620, 220],  // cache-2 (index 7, hit path)
+        [440, 220],  // server-2 (index 8, dummy)
+        [800, 220],  // database (index 9, miss path)
       ]
 
     case 'stage-db-replica':
-      // DB replication: primary at y=130, replicas at y=275 (db-replica-1)
+      // DB replication: compressed, replicas at x=820 y=290
       return [
         [60, 220],   // client
-        [200, 220],  // api-gateway
-        [350, 220],  // load-balancer
-        [490, 220],  // server-2
-        [490, 220],  // server-2 (dup)
-        [760, 220],  // cache-2
-        [1060, 275], // db-replica-1
-        [760, 220],  // cache-2 (index 7, hit path)
-        [490, 220],  // server-2 (index 8, dummy)
-        [1060, 275], // db-replica-1 (index 9, miss path)
+        [180, 220],  // api-gateway
+        [310, 220],  // load-balancer
+        [440, 220],  // server-2
+        [440, 220],  // server-2 (dup)
+        [620, 220],  // cache-2
+        [820, 290],  // db-replica-1
+        [620, 220],  // cache-2 (index 7, hit path)
+        [440, 220],  // server-2 (index 8, dummy)
+        [820, 290],  // db-replica-1 (index 9, miss path)
       ]
 
     case 'stage-api-problem': {

@@ -20,29 +20,29 @@ export function InfoCard({ infoCard, fixModes, fixModeIndex, onAdvanceFix }: Inf
   const howToResolve = activeFix?.howToResolve ?? infoCard.howToResolve
 
   return (
-    <div className="info-card space-y-4 p-4">
+    <div className="info-card space-y-3 p-4">
       {/* Technical Term */}
       <div className="border-t border-gray-800 pt-4">
-        <div className="font-pixel text-sm text-cyan-500 tracking-widest mb-2">TECHNICAL TERM</div>
+        <div className="font-pixel text-xs text-cyan-500 tracking-widest mb-2">TECHNICAL TERM</div>
         <div className="font-terminal text-base text-cyan-300">{technicalTerm}</div>
       </div>
 
       {/* When Happens */}
       <div className="border-t border-gray-800 pt-3">
-        <div className="font-pixel text-sm text-amber-500 tracking-widest mb-2">WHEN DOES THIS HAPPEN</div>
-        <p className="font-terminal text-sm text-gray-400 leading-relaxed">{whenHappens}</p>
+        <div className="font-pixel text-xs text-amber-500 tracking-widest mb-2">WHEN DOES THIS HAPPEN</div>
+        <p className="font-terminal text-base text-gray-400 leading-snug">{whenHappens}</p>
       </div>
 
       {/* What Condition */}
       <div className="border-t border-gray-800 pt-3">
-        <div className="font-pixel text-sm text-amber-500 tracking-widest mb-2">WHAT IS THIS CONDITION</div>
-        <p className="font-terminal text-sm text-gray-400 leading-relaxed">{whatCondition}</p>
+        <div className="font-pixel text-xs text-amber-500 tracking-widest mb-2">WHAT IS THIS CONDITION</div>
+        <p className="font-terminal text-base text-gray-400 leading-snug">{whatCondition}</p>
       </div>
 
       {/* How to Resolve */}
       <div className="border-t border-gray-800 pt-3">
-        <div className="font-pixel text-sm text-green-500 tracking-widest mb-2">HOW TO RESOLVE</div>
-        <p className="font-terminal text-sm text-gray-400 leading-relaxed">{howToResolve}</p>
+        <div className="font-pixel text-xs text-green-500 tracking-widest mb-2">HOW TO RESOLVE</div>
+        <p className="font-terminal text-base text-gray-400 leading-snug">{howToResolve}</p>
       </div>
 
       {/* Fix Buttons or Optimized State */}

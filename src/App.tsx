@@ -49,7 +49,7 @@ function App() {
       <div className="flex w-full h-screen bg-gray-950 text-white overflow-hidden">
         {/* LEFT: InfoCard sidebar */}
         <div
-          className="flex-shrink-0 w-64 h-full overflow-y-auto bg-gray-950"
+          className="flex-shrink-0 w-72 h-full overflow-y-auto bg-gray-950"
           style={{
             borderRight: '1px solid rgba(255,176,0,0.3)',
             boxShadow: 'inset -2px 0 0 rgba(255,176,0,0.05), inset -1px 0 0 rgba(255,176,0,0.15)',
