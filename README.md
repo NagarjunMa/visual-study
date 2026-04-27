@@ -1,6 +1,6 @@
-# System Design Simulator
+# Visual Learning - System Design & Database Internals Simulator
 
-> Interactive learning tool for mastering system design concepts through real-time visualization and particle flow animations.
+> Interactive learning: 6 system design stages + 3 database modules. Real-time visualization of scaling challenges, cache patterns, and data structure internals.
 
 [![Node.js](https://img.shields.io/badge/Node.js-20+-green.svg)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-19.2-blue.svg)](https://react.dev/)
@@ -10,26 +10,26 @@
 
 ## Overview
 
-**System Design Simulator** teaches distributed systems architecture through 10 progressive stages. Watch request particles flow through an evolving architecture as you learn:
+**9 progressive stages** teaching distributed systems + database internals:
 
-- Single-server baselines and their limitations
-- Stateful vs. stateless server design
-- Load balancing and horizontal scaling
-- Health checks and failure detection
-- API gateways and rate limiting
-- Database bottlenecks and connection pooling
-- Caching strategies and cache invalidation
-- Multi-tier resilience patterns
+**System Design (Stages 1-6):** particle-based, tick-driven metrics
+- Single-server baselines & limitations
+- Stateful vs stateless design
+- Load balancing & health checks
+- API gateways & rate limiting
+- Caching strategies & connection pooling
+- Data replication & resilience
 
-Each stage is interactive: metrics update live, nodes change color based on load (green → amber → red), and particles reveal bottlenecks visually.
+**Database Internals (Stages 7-9):** interactive, user-driven operations
+- **Stage 7:** Redis KV store (hash table, LRU eviction, persistence modes)
+- **Stage 8:** Cassandra LSM tree (Memtable, SSTables, Bloom filters, compaction)
+- **Stage 9:** PostgreSQL B+ Tree (page splits, leaf chain, range scans)
 
 ## Features
 
-✨ **10-Stage Progression**
-- Stage 1-3: Single server, stateful/stateless trade-offs
-- Stage 4-5: Load balancing, health checks, scaling
-- Stage 6-7: API gateway, database bottleneck
-- Stage 8-10: Caching, failure scenarios, full resilience
+✨ **9-Stage Progression + Database Modules**
+- Stages 1-6: System design with live metrics (RPS, latency, CPU, pool usage)
+- Stages 7-9: Interactive database simulations (SET/GET/DELETE operations)
 
 🎨 **Real-Time Visualization**
 - Particles flow through architecture showing request paths
