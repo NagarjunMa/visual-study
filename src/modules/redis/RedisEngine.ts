@@ -1,6 +1,7 @@
 import type { RedisState, RedisEntry, RedisAnimStep, PersistenceMode } from './redis.types'
 
 const BUCKET_COUNT = 8
+const RDB_SAVE_INTERVAL = 5  // Save RDB every 5 SETs
 
 function simpleHash(key: string): number {
   let hash = 0
@@ -15,9 +16,9 @@ export function createInitialRedisState(capacity: number = 10, persistence: Pers
   const buckets = Array.from({ length: BUCKET_COUNT }, () => ({ entries: [] }))
   return {
     buckets,
-    lruOrder: new Map(),
     lruHead: null,
     lruTail: null,
+    lruMap: new Map(),
     capacity,
     persistence,
     rdbSnapshot: [],
@@ -25,6 +26,10 @@ export function createInitialRedisState(capacity: number = 10, persistence: Pers
     crashed: false,
     currentTime: 0,
   }
+}
+
+function getTotalEntryCount(state: RedisState): number {
+  return state.buckets.reduce((sum, b) => sum + b.entries.length, 0)
 }
 
 export function redisSet(
@@ -42,68 +47,73 @@ export function redisSet(
 
   const newState = { ...state }
   newState.buckets = state.buckets.map((b, i) => (i === hash ? { entries: [...b.entries] } : b))
-  newState.lruOrder = new Map(state.lruOrder)
+  newState.lruMap = new Map(state.lruMap)
+  newState.currentTime = state.currentTime + 1
 
-  const entryIndex = (newState.lruOrder.size % 10000) + state.currentTime
-  const newEntry: RedisEntry = { key, value, ttl, lruTime: state.currentTime, index: entryIndex }
+  const newEntry: RedisEntry = { key, value, ttl }
 
+  // Check if we're updating or inserting
   if (existingIdx >= 0) {
-    // Update existing
+    // Update existing entry
     newState.buckets[hash].entries[existingIdx] = newEntry
   } else {
-    // Insert new
-    if (newState.buckets[hash].entries.length >= newState.capacity) {
-      // Evict LRU
-      if (newState.lruTail) {
-        const lruKey = newState.lruTail
-        const tailNode = newState.lruOrder.get(lruKey)
-        if (tailNode?.prev) {
-          const prevNode = newState.lruOrder.get(tailNode.prev)
-          if (prevNode) prevNode.next = null
-          newState.lruHead = newState.lruTail === newState.lruHead ? null : tailNode.prev
-        } else {
-          newState.lruHead = null
-        }
-        newState.lruOrder.delete(lruKey)
+    // Insert new entry — evict LRU if at capacity
+    const totalEntries = getTotalEntryCount(newState)
+    if (totalEntries >= newState.capacity && newState.lruTail) {
+      const lruKey = newState.lruTail
+      const lruNode = newState.lruMap.get(lruKey)
 
-        // Find and remove from bucket
-        for (let i = 0; i < BUCKET_COUNT; i++) {
-          const idx = newState.buckets[i].entries.findIndex(e => e.key === lruKey)
-          if (idx >= 0) {
-            newState.buckets[i].entries.splice(idx, 1)
-            steps.push({ type: 'lru-evict', key: lruKey })
-            break
-          }
-        }
+      // Unlink from LRU chain
+      if (lruNode?.prev) {
+        const prevNode = newState.lruMap.get(lruNode.prev)
+        if (prevNode) prevNode.next = null
+        newState.lruTail = lruNode.prev
+      } else {
         newState.lruTail = null
-        for (const [k] of newState.lruOrder) {
-          const node = newState.lruOrder.get(k)
-          if (node && !node.next) newState.lruTail = k
+        newState.lruHead = null
+      }
+      newState.lruMap.delete(lruKey)
+
+      // Remove from bucket
+      for (let i = 0; i < BUCKET_COUNT; i++) {
+        const idx = newState.buckets[i].entries.findIndex(e => e.key === lruKey)
+        if (idx >= 0) {
+          newState.buckets[i].entries.splice(idx, 1)
+          steps.push({ type: 'lru-evict', key: lruKey })
+          break
         }
       }
     }
+
     newState.buckets[hash].entries.push(newEntry)
   }
 
-  // Update LRU — move key to head
-  const oldNode = newState.lruOrder.get(key)
-  if (oldNode && oldNode.prev) {
-    const prevNode = newState.lruOrder.get(oldNode.prev)
-    if (prevNode) prevNode.next = oldNode.next
-  }
-  if (oldNode && oldNode.next) {
-    const nextNode = newState.lruOrder.get(oldNode.next)
-    if (nextNode) nextNode.prev = oldNode.prev
-  }
-  if (newState.lruTail === key && oldNode?.prev) {
-    newState.lruTail = oldNode.prev
+  // Update LRU chain: move key to head (MRU)
+  const oldNode = newState.lruMap.get(key)
+  if (oldNode) {
+    // Unlink from chain
+    if (oldNode.prev) {
+      const prevNode = newState.lruMap.get(oldNode.prev)
+      if (prevNode) prevNode.next = oldNode.next
+    }
+    if (oldNode.next) {
+      const nextNode = newState.lruMap.get(oldNode.next)
+      if (nextNode) nextNode.prev = oldNode.prev
+    }
+    if (newState.lruTail === key && oldNode.prev) {
+      newState.lruTail = oldNode.prev
+    }
+    if (newState.lruHead === key) {
+      newState.lruHead = oldNode.next
+    }
   }
 
-  const headNode = newState.lruHead ? newState.lruOrder.get(newState.lruHead) : null
+  // Link to head
+  const headNode = newState.lruHead ? newState.lruMap.get(newState.lruHead) : null
   if (headNode) {
     headNode.prev = key
   }
-  newState.lruOrder.set(key, { key, prev: null, next: newState.lruHead || null })
+  newState.lruMap.set(key, { prev: null, next: newState.lruHead || null })
   if (!newState.lruHead) {
     newState.lruTail = key
   }
@@ -117,8 +127,8 @@ export function redisSet(
     steps.push({ type: 'aof-write', command: cmd })
   }
 
-  // RDB periodic snapshot (simulated: every 10 seconds)
-  if (newState.persistence === 'rdb' && newState.currentTime % 10 === 0) {
+  // RDB periodic snapshot (every 5 SETs)
+  if (newState.persistence === 'rdb' && newState.currentTime % RDB_SAVE_INTERVAL === 0) {
     newState.rdbSnapshot = []
     for (const b of newState.buckets) {
       newState.rdbSnapshot.push(...b.entries)
@@ -150,7 +160,7 @@ export function redisGet(state: RedisState, key: string): { found: boolean; valu
     return { found: false, value: null, steps }
   }
 
-  // Move to LRU head
+  // Found and not expired — update LRU access
   steps.push({ type: 'lru-move-head', key })
 
   return { found: true, value: entry.value, steps }
@@ -160,17 +170,18 @@ export function redisCrash(state: RedisState): { newState: RedisState; recovered
   const newState = { ...state, crashed: true }
 
   if (state.persistence === 'none') {
+    // Total data loss
     newState.buckets = Array.from({ length: BUCKET_COUNT }, () => ({ entries: [] }))
-    newState.lruOrder = new Map()
+    newState.lruMap = new Map()
     newState.lruHead = null
     newState.lruTail = null
-    return { newState, recovered: { count: 0, mode: 'Data lost' } }
+    return { newState, recovered: { count: 0, mode: 'Data lost (no persistence)' } }
   }
 
   if (state.persistence === 'rdb') {
     // Recover from RDB snapshot
     newState.buckets = Array.from({ length: BUCKET_COUNT }, () => ({ entries: [] }))
-    newState.lruOrder = new Map()
+    newState.lruMap = new Map()
     newState.lruHead = null
     newState.lruTail = null
 
@@ -178,9 +189,9 @@ export function redisCrash(state: RedisState): { newState: RedisState; recovered
       const hash = simpleHash(entry.key)
       newState.buckets[hash].entries.push(entry)
 
-      const headNode = newState.lruHead ? newState.lruOrder.get(newState.lruHead) : null
+      const headNode = newState.lruHead ? newState.lruMap.get(newState.lruHead) : null
       if (headNode) headNode.prev = entry.key
-      newState.lruOrder.set(entry.key, { key: entry.key, prev: null, next: newState.lruHead || null })
+      newState.lruMap.set(entry.key, { prev: null, next: newState.lruHead || null })
       if (!newState.lruHead) newState.lruTail = entry.key
       newState.lruHead = entry.key
     }
@@ -191,23 +202,27 @@ export function redisCrash(state: RedisState): { newState: RedisState; recovered
   if (state.persistence === 'aof') {
     // Replay AOF log
     newState.buckets = Array.from({ length: BUCKET_COUNT }, () => ({ entries: [] }))
-    newState.lruOrder = new Map()
+    newState.lruMap = new Map()
     newState.lruHead = null
     newState.lruTail = null
 
     let count = 0
+    // Set persistence to 'none' during replay to prevent re-appending to aofLog
+    const replayState: RedisState = { ...newState, persistence: 'none' }
     for (const cmd of state.aofLog) {
       if (cmd.startsWith('SET')) {
         const parts = cmd.split(' ')
         const key = parts[1]
         const value = parts[2]
-        const { newState: updatedState } = redisSet(newState, key, value)
-        Object.assign(newState, updatedState)
+        const { newState: updatedState } = redisSet(replayState, key, value)
+        Object.assign(replayState, updatedState)
         count++
       }
     }
 
-    return { newState, recovered: { count, mode: 'AOF replay' } }
+    // Restore persistence mode after replay
+    replayState.persistence = 'aof'
+    return { newState: replayState, recovered: { count, mode: 'AOF replay' } }
   }
 
   return { newState, recovered: { count: 0, mode: 'Unknown' } }

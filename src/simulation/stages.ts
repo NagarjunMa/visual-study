@@ -457,6 +457,80 @@ export const stageRedis: Stage = {
   viewBox: '0 0 1200 600',
 }
 
+export const stageLSM: Stage = {
+  id: 'stage-lsm',
+  title: 'Cassandra LSM Tree',
+  subtitle: 'Log-Structured Merge Tree — Write Path, Compaction, Bloom Filters',
+  insight: 'Memtable → L0 SSTables → L1. Bloom filters speed up reads. Compaction removes duplicates.',
+  displayTitle: 'Cassandra LSM Tree Internals',
+  description: 'Write-Ahead Log, in-memory Memtable, immutable SSTables, Bloom filters, compaction.',
+  components: ['Client', 'Cassandra', 'WAL', 'Memtable', 'SSTables', 'Disk'],
+  moduleType: 'lsm',
+  infoCard: {
+    technicalTerm: 'LSM Tree (Memtable + SSTables)',
+    whenHappens: 'Every SET goes to WAL + Memtable. Memtable flush creates immutable SSTable. Compaction merges SSTables.',
+    whatCondition: 'Memtable capacity exceeded → flush to L0. L0 accumulates SSTables → compaction to L1. Bloom filters skip SSTable checks on misses.',
+    howToResolve: 'Flush often (keep Memtable small). Compact SSTables (reduces read amplification). Bloom filters eliminate false seeks.',
+  },
+  fixModes: [
+    {
+      engineId: 'lsm-bloom',
+      enterLabel: 'Bloom Filter Optimization',
+      description: 'Bloom filters allow quick negative lookups without SSTable access',
+      nodes: [],
+      edges: [],
+      viewBox: '0 0 1200 580',
+      whatCondition: 'GET checks Memtable, then L0/L1 SSTables. Bloom filter says "no" → skip; "maybe" → check entries.',
+      howToResolve: 'Bloom filter reduces disk seeks on key misses. Probabilistic false positives acceptable.',
+    },
+    {
+      engineId: 'lsm-compaction',
+      enterLabel: 'Compaction Strategy',
+      description: 'Compaction merges SSTables, removing duplicate keys and tombstones',
+      nodes: [],
+      edges: [],
+      viewBox: '0 0 1200 580',
+      whatCondition: 'L0 accumulates many SSTables. Compaction merges into L1, keeping newest version of each key.',
+      howToResolve: 'Compaction reduces read amplification but increases write amplification. Balance with flush rate.',
+    },
+  ],
+  nodes: [],
+  edges: [],
+  viewBox: '0 0 1200 580',
+}
+
+export const stageBTree: Stage = {
+  id: 'stage-btree',
+  title: 'PostgreSQL B+ Tree',
+  subtitle: 'B+ Tree Index — Insert, Split, Range Scan',
+  insight: 'B+ Tree maintains sorted keys. Leaf chain enables O(K) range scans. Splits rebalance the tree.',
+  displayTitle: 'PostgreSQL B+ Tree Internals',
+  description: 'Watch a B+ Tree index grow. See page splits, leaf linking, and efficient range scans.',
+  components: ['Client', 'PostgreSQL', 'B+ Tree Index', 'Heap'],
+  moduleType: 'btree',
+  infoCard: {
+    technicalTerm: 'B+ Tree Index',
+    whenHappens: 'Every INSERT updates the B+ Tree. Index lookup uses tree traversal. Range queries scan leaf chain.',
+    whatCondition: 'Leaf page overflow (> 3 keys) triggers split. Median key pushed to parent. Parent may overflow → root split → height increases.',
+    howToResolve: 'Splits are O(log N) amortized. Leaf chain enables O(K) range scans. Tree stays balanced automatically.',
+  },
+  fixModes: [
+    {
+      engineId: 'btree-search',
+      enterLabel: 'Efficient Range Scan',
+      description: 'Leaf chain enables O(K) range scan without re-traversing tree',
+      nodes: [],
+      edges: [],
+      viewBox: '0 0 1100 560',
+      whatCondition: 'Range query [lo, hi] finds leftmost matching leaf, scans right via leaf links.',
+      howToResolve: 'Leaf chain = O(results) scan. No re-traversal needed. Efficient for range queries.',
+    },
+  ],
+  nodes: [],
+  edges: [],
+  viewBox: '0 0 1100 560',
+}
+
 export const stages: Stage[] = [
   stage1,
   stage2,
@@ -465,4 +539,6 @@ export const stages: Stage[] = [
   stage5,
   stage6,
   stageRedis,
+  stageLSM,
+  stageBTree,
 ]

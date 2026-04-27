@@ -5,6 +5,8 @@ import { SystemDiagram } from './components/diagram/SystemDiagram'
 import { LandingPage } from './components/LandingPage'
 import { InfoCard } from './components/InfoCard'
 import { RedisSimulation } from './modules/redis/RedisSimulation'
+import { LSMSimulation } from './modules/lsm/LSMSimulation'
+import { BTreeSimulation } from './modules/btree/BTreeSimulation'
 
 function App() {
   const [currentStageIndex, setCurrentStageIndex] = useState(0)
@@ -117,6 +119,10 @@ function App() {
           {/* Conditional renderer: module vs system design */}
           {currentStage.moduleType === 'redis-kv' ? (
             <RedisSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
+          ) : currentStage.moduleType === 'lsm' ? (
+            <LSMSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
+          ) : currentStage.moduleType === 'btree' ? (
+            <BTreeSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
           ) : (
             <SystemDiagram
               stage={diagramStage}

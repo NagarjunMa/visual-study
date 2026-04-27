@@ -1,4 +1,4 @@
-import { useState, useReducer } from 'react'
+import { useState, useReducer, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import type { Stage } from '../../simulation/types'
 import type { RedisState } from './redis.types'
@@ -18,7 +18,15 @@ type RedisAction =
   | { type: 'advance-time' }
   | { type: 'clear' }
 
-const initialState = createInitialRedisState(10, 'none')
+function getInitialPersistenceMode(fixModeIndex?: number): 'none' | 'rdb' | 'aof' {
+  if (fixModeIndex === 0) return 'rdb'       // Fix 1: RDB snapshots
+  if (fixModeIndex === 1) return 'aof'       // Fix 2: AOF recovery
+  return 'none'                               // Problem: volatile, no persistence
+}
+
+function createInitialState(fixModeIndex?: number) {
+  return createInitialRedisState(10, getInitialPersistenceMode(fixModeIndex))
+}
 
 function redisReducer(state: RedisState, action: RedisAction): RedisState {
   switch (action.type) {
@@ -35,8 +43,8 @@ function redisReducer(state: RedisState, action: RedisAction): RedisState {
       return newState
     }
     case 'restart': {
-      const { newState } = redisCrash(state)
-      return { ...newState, crashed: false }
+      // Just mark as restarted - data recovery already happened in crash
+      return { ...state, crashed: false }
     }
     case 'set-persistence': {
       return { ...state, persistence: action.mode, rdbSnapshot: [], aofLog: [] }
@@ -53,11 +61,16 @@ function redisReducer(state: RedisState, action: RedisAction): RedisState {
   }
 }
 
-export function RedisSimulation({}: RedisSimulationProps) {
-  const [state, dispatch] = useReducer(redisReducer, initialState)
+export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
+  const [state, dispatch] = useReducer(redisReducer, createInitialState(fixModeIndex))
   const [inputKey, setInputKey] = useState('')
   const [inputValue, setInputValue] = useState('')
   const [message, setMessage] = useState('')
+
+  // Sync fixModeIndex changes to persistence mode
+  useEffect(() => {
+    dispatch({ type: 'set-persistence', mode: getInitialPersistenceMode(fixModeIndex) })
+  }, [fixModeIndex])
 
   const handleSet = () => {
     if (!inputKey.trim() || !inputValue.trim()) return
@@ -81,9 +94,15 @@ export function RedisSimulation({}: RedisSimulationProps) {
   const memoryPct = (memoryUsed / state.capacity) * 100
 
   return (
-    <div className="w-full h-full bg-gray-950 flex flex-col overflow-hidden">
+    <div className="w-full h-full bg-gray-950 flex flex-col overflow-hidden relative">
       {/* SVG Visualization */}
-      <div className="flex-1 flex items-center justify-center overflow-hidden px-4">
+      <div className="flex-1 flex items-center justify-center overflow-hidden px-4 relative">
+        {/* Crash overlay */}
+        {state.crashed && (
+          <div className="absolute inset-0 bg-red-900 opacity-20 flex items-center justify-center z-10 pointer-events-none">
+            <div className="text-red-400 text-2xl font-pixel">⚠ CRASHED</div>
+          </div>
+        )}
         <svg viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid meet" className="max-w-full max-h-full">
           {/* Background */}
           <rect width="1200" height="600" fill="#030712" />
@@ -144,7 +163,7 @@ export function RedisSimulation({}: RedisSimulationProps) {
                     {/* Entry content */}
                     <text
                       x={90 + entryIdx * 130}
-                      y={118}
+                      y={100 + bucketIdx * 50 + 18}
                       fill="#38bdf8"
                       fontSize="10"
                       fontFamily="monospace"
@@ -154,7 +173,7 @@ export function RedisSimulation({}: RedisSimulationProps) {
                     {entry.ttl !== null && (
                       <text
                         x={200 + entryIdx * 130}
-                        y={118}
+                        y={100 + bucketIdx * 50 + 18}
                         fill="#fca5a5"
                         fontSize="8"
                         fontFamily="monospace"
@@ -175,7 +194,7 @@ export function RedisSimulation({}: RedisSimulationProps) {
             {/* Draw linked list */}
             {state.lruHead && (
               <LRUChainRenderer
-                lruOrder={state.lruOrder}
+                lruMap={state.lruMap}
                 head={state.lruHead}
                 startX={50}
                 y={555}
@@ -245,8 +264,9 @@ export function RedisSimulation({}: RedisSimulationProps) {
               onKeyDown={e => {
                 if (e.key === 'Enter' && inputValue) handleSet()
               }}
+              disabled={state.crashed}
               placeholder="user:1"
-              className="w-full px-2 py-1 bg-gray-800 border border-gray-600 text-gray-100 text-xs font-monospace rounded"
+              className="w-full px-2 py-1 bg-gray-800 border border-gray-600 text-gray-100 text-xs font-monospace rounded disabled:opacity-50"
             />
           </div>
           <div className="flex-1">
@@ -258,8 +278,9 @@ export function RedisSimulation({}: RedisSimulationProps) {
               onKeyDown={e => {
                 if (e.key === 'Enter') handleSet()
               }}
+              disabled={state.crashed}
               placeholder="Alice"
-              className="w-full px-2 py-1 bg-gray-800 border border-gray-600 text-gray-100 text-xs font-monospace rounded"
+              className="w-full px-2 py-1 bg-gray-800 border border-gray-600 text-gray-100 text-xs font-monospace rounded disabled:opacity-50"
             />
           </div>
           <button
@@ -282,8 +303,9 @@ export function RedisSimulation({}: RedisSimulationProps) {
         <div className="flex gap-2">
           <button
             onClick={() => {
+              const result = redisCrash(state)
               dispatch({ type: 'crash' })
-              setMessage('SERVER CRASHED! Data lost (depends on persistence mode)')
+              setMessage(`SERVER CRASHED! ${result.recovered.mode}: ${result.recovered.count} keys recovered`)
             }}
             className="px-3 py-1 bg-red-600 text-white text-xs font-pixel rounded hover:bg-red-700"
           >
@@ -293,7 +315,7 @@ export function RedisSimulation({}: RedisSimulationProps) {
             <button
               onClick={() => {
                 dispatch({ type: 'restart' })
-                setMessage('Server restarted. Recovery depends on persistence mode.')
+                setMessage('Server restarted. All systems online.')
               }}
               className="px-3 py-1 bg-green-600 text-white text-xs font-pixel rounded hover:bg-green-700"
             >
@@ -310,18 +332,47 @@ export function RedisSimulation({}: RedisSimulationProps) {
             Clear
           </button>
         </div>
+
+        {/* Persistence State Panel */}
+        <div className="bg-gray-800 rounded p-2 text-xs font-monospace text-gray-300 space-y-1 max-h-32 overflow-auto">
+          {state.persistence === 'none' && (
+            <div className="text-red-400">
+              💾 Persistence: NONE (RAM only)
+            </div>
+          )}
+          {state.persistence === 'rdb' && (
+            <div className="space-y-1">
+              <div className="text-yellow-400">💾 RDB Snapshots: {state.rdbSnapshot.length} keys</div>
+              {state.rdbSnapshot.length > 0 && (
+                <div className="text-gray-400 ml-2">Last: {state.rdbSnapshot.slice(0, 2).map(e => e.key).join(', ')}{state.rdbSnapshot.length > 2 ? '...' : ''}</div>
+              )}
+            </div>
+          )}
+          {state.persistence === 'aof' && (
+            <div className="space-y-1">
+              <div className="text-green-400">📝 AOF Log: {state.aofLog.length} commands</div>
+              {state.aofLog.length > 0 && (
+                <div className="text-gray-400 ml-2 max-h-16 overflow-y-auto">
+                  {state.aofLog.slice(-3).map((cmd, i) => (
+                    <div key={i}>&gt; {cmd}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
 function LRUChainRenderer({
-  lruOrder,
+  lruMap,
   head,
   startX,
   y,
 }: {
-  lruOrder: Map<string, any>
+  lruMap: Map<string, { prev: string | null; next: string | null }>
   head: string | null
   startX: number
   y: number
@@ -330,7 +381,7 @@ function LRUChainRenderer({
   let current = head
   while (current) {
     nodes.push(current)
-    const node = lruOrder.get(current)
+    const node = lruMap.get(current)
     current = node?.next || null
   }
 

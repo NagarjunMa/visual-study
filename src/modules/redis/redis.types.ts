@@ -3,50 +3,40 @@ export type PersistenceMode = 'none' | 'rdb' | 'aof'
 export interface RedisEntry {
   key: string
   value: string
-  ttl: number | null  // null = no expiry, number = milliseconds
-  lruTime: number
-  index: number  // unique identifier for animation
+  ttl: number | null
 }
 
 export interface HashBucket {
   entries: RedisEntry[]
 }
 
-export interface LRUNode {
-  key: string
-  prev: string | null  // key of prev node
-  next: string | null  // key of next node
-}
-
 export interface RedisState {
-  buckets: HashBucket[]  // 8 buckets
-  lruOrder: Map<string, LRUNode>  // key → LRU node
-  lruHead: string | null  // key of MRU node
-  lruTail: string | null  // key of LRU node
-  capacity: number  // max entries before eviction
+  // ─── In-memory (RAM) — lost on crash ───
+  buckets: HashBucket[]        // 8 hash buckets, entries stored here
+  lruHead: string | null       // MRU key
+  lruTail: string | null       // LRU key
+  lruMap: Map<string, { prev: string | null; next: string | null }>  // doubly-linked list
+
+  // ─── Config ───
+  capacity: number             // total max entries before eviction
   persistence: PersistenceMode
-  rdbSnapshot: RedisEntry[]  // saved state for RDB recovery
-  aofLog: string[]  // command log for AOF recovery
+  currentTime: number          // ticks, for TTL & RDB triggers
+
+  // ─── Disk (survives crash) ───
+  rdbSnapshot: RedisEntry[]    // last explicit snapshot
+  aofLog: string[]             // every write command since last clear
+
+  // ─── Status ───
   crashed: boolean
-  currentTime: number  // for TTL countdown
 }
 
 export type RedisAnimStep =
-  | { type: 'hash-key', key: string, bucketIdx: number, hash: number }
-  | { type: 'bucket-traverse', bucketIdx: number, foundAt: number | null }
-  | { type: 'entry-create', key: string, value: string, bucketIdx: number }
-  | { type: 'lru-move-head', key: string }
-  | { type: 'lru-evict', key: string }
-  | { type: 'ttl-expire', key: string }
-  | { type: 'aof-write', command: string }
+  | { type: 'hash-key'; key: string; bucketIdx: number; hash: number }
+  | { type: 'bucket-traverse'; bucketIdx: number; foundAt: number | null }
+  | { type: 'lru-move-head'; key: string }
+  | { type: 'lru-evict'; key: string }
+  | { type: 'ttl-expire'; key: string }
+  | { type: 'aof-write'; command: string }
   | { type: 'rdb-snapshot-save' }
   | { type: 'crash' }
-  | { type: 'restart-none' }
-  | { type: 'restart-rdb', recovered: number }
-  | { type: 'restart-aof', replayCount: number }
-
-export interface AnimContext {
-  steps: RedisAnimStep[]
-  currentStep: number
-  isAnimating: boolean
-}
+  | { type: 'restart'; mode: string; recoveredCount: number }
