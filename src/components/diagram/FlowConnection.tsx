@@ -45,15 +45,15 @@ export function FlowConnection({ edge, nodes }: FlowConnectionProps) {
       {/* Background layer for depth */}
       <path
         d={d}
-        stroke="#111827"
+        stroke="#B0B09A"
         strokeWidth={3}
         fill="none"
-        opacity={0.5}
+        opacity={0.3}
       />
       {/* Animated flow layer */}
       <path
         d={d}
-        stroke="#374151"
+        stroke="#8A8A76"
         strokeWidth={1.5}
         strokeDasharray="8 6"
         fill="none"

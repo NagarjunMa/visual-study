@@ -136,7 +136,7 @@ export function BTreeSimulation({}: BTreeSimulationProps) {
           width={boxWidth}
           height="50"
           rx="3"
-          fill={page.isLeaf ? '#1f2937' : '#2d3748'}
+          fill={page.isLeaf ? '#E8E6D8' : '#E8E6D8'}
           stroke={page.isLeaf ? '#0ea5e9' : '#f59e0b'}
           strokeWidth="2"
           initial={{ opacity: 0, scale: 0.8 }}
@@ -168,7 +168,7 @@ export function BTreeSimulation({}: BTreeSimulationProps) {
               key={`ctid-${i}`}
               x={pos.x - boxWidth / 2 + i * KEY_SLOT + KEY_SLOT / 2}
               y={pos.y + 68}
-              fill="#9ca3af"
+              fill="#7A7A6E"
               fontSize="8"
               fontFamily="monospace"
               textAnchor="middle"
@@ -189,7 +189,7 @@ export function BTreeSimulation({}: BTreeSimulationProps) {
                 y1={pos.y + 50}
                 x2={childPos.x}
                 y2={childPos.y}
-                stroke="#4b5563"
+                stroke="#B0B09A"
                 strokeWidth="1"
               />
             )
@@ -214,7 +214,7 @@ export function BTreeSimulation({}: BTreeSimulationProps) {
   const allPageIds = Object.keys(state.pages)
 
   return (
-    <div className="w-full h-full bg-gray-950 flex flex-col overflow-hidden">
+    <div className="w-full h-full flex flex-col overflow-hidden" style={{ background: '#F0F0E8' }}>
       <div className="flex-1 flex items-center justify-center overflow-hidden px-4">
         <svg viewBox="0 0 1100 560" preserveAspectRatio="xMidYMid meet" className="max-w-full max-h-full">
           <defs>
@@ -222,7 +222,7 @@ export function BTreeSimulation({}: BTreeSimulationProps) {
               <path d="M0,0 L0,6 L9,3 z" fill="#22c55e" />
             </marker>
           </defs>
-          <rect width="1100" height="560" fill="#030712" />
+          <rect width="1100" height="560" fill="#F0F0E8" />
 
           {/* Tree title */}
           <text x="50" y="30" fill="#22c55e" fontSize="14" fontWeight="bold" fontFamily="monospace">
@@ -247,10 +247,10 @@ export function BTreeSimulation({}: BTreeSimulationProps) {
       </div>
 
       {/* Controls */}
-      <div className="bg-gray-900 border-t border-gray-700 p-4 space-y-3">
+      <div className="border-t p-4 space-y-3" style={{ background: '#E8E6D8', borderColor: '#B0B09A' }}>
         <div className="flex gap-2 items-end">
           <div className="flex-1">
-            <label className="block text-xs text-gray-400 mb-1">Key to Insert</label>
+            <label className="block text-xs text-[#7A7A6E] mb-1">Key to Insert</label>
             <input
               type="number"
               value={inputKey}
@@ -259,7 +259,7 @@ export function BTreeSimulation({}: BTreeSimulationProps) {
                 if (e.key === 'Enter') handleInsert()
               }}
               placeholder="10"
-              className="w-full px-2 py-1 bg-gray-800 border border-gray-600 text-gray-100 text-xs font-monospace rounded"
+              className="w-full px-2 py-1 border text-xs font-monospace rounded" style={{ background: '#F0F0E8', borderColor: '#B0B09A', color: '#2A2A28' }}
             />
           </div>
           <button
@@ -280,23 +280,23 @@ export function BTreeSimulation({}: BTreeSimulationProps) {
 
         <div className="flex gap-2 items-end">
           <div className="flex-1">
-            <label className="block text-xs text-gray-400 mb-1">Range: Lo</label>
+            <label className="block text-xs text-[#7A7A6E] mb-1">Range: Lo</label>
             <input
               type="number"
               value={rangeLoInput}
               onChange={e => setRangeLoInput(e.target.value)}
               placeholder="10"
-              className="w-full px-2 py-1 bg-gray-800 border border-gray-600 text-gray-100 text-xs font-monospace rounded"
+              className="w-full px-2 py-1 border text-xs font-monospace rounded" style={{ background: '#F0F0E8', borderColor: '#B0B09A', color: '#2A2A28' }}
             />
           </div>
           <div className="flex-1">
-            <label className="block text-xs text-gray-400 mb-1">Range: Hi</label>
+            <label className="block text-xs text-[#7A7A6E] mb-1">Range: Hi</label>
             <input
               type="number"
               value={rangeHiInput}
               onChange={e => setRangeHiInput(e.target.value)}
               placeholder="50"
-              className="w-full px-2 py-1 bg-gray-800 border border-gray-600 text-gray-100 text-xs font-monospace rounded"
+              className="w-full px-2 py-1 border text-xs font-monospace rounded" style={{ background: '#F0F0E8', borderColor: '#B0B09A', color: '#2A2A28' }}
             />
           </div>
           <button

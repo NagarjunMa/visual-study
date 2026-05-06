@@ -60,33 +60,22 @@ export function SystemDiagram({ stage, particles, metrics, tick, showStatefulBub
   )
 
   return (
-    <div className="w-full h-full bg-gray-950 overflow-hidden flex items-center justify-center">
+    <div className="w-full h-full overflow-hidden flex items-center justify-center" style={{ background: '#F0F0E8' }}>
       <svg
         viewBox={stage.viewBox}
         preserveAspectRatio="xMidYMid meet"
         className="max-w-full max-h-full"
-        style={{ backgroundColor: '#030712' }}
+        style={{ backgroundColor: '#F0F0E8' }}
       >
-        {/* Defs */}
         <defs>
-          {/* Dot grid pattern */}
           <pattern id="dots" width={40} height={40} patternUnits="userSpaceOnUse">
-            <circle cx={20} cy={20} r={1} fill="#374151" opacity={0.3} />
+            <circle cx={20} cy={20} r={1} fill="#B0B09A" opacity={0.3} />
           </pattern>
 
-          {/* Arrowhead marker */}
-          <marker
-            id="arrowhead"
-            markerWidth={10}
-            markerHeight={10}
-            refX={8}
-            refY={3}
-            orient="auto"
-          >
-            <polygon points="0 0, 10 3, 0 6" fill="#374151" />
+          <marker id="arrowhead" markerWidth={10} markerHeight={10} refX={8} refY={3} orient="auto">
+            <polygon points="0 0, 10 3, 0 6" fill="#8A8A76" />
           </marker>
 
-          {/* Particle glow filter */}
           <filter id="particle-glow">
             <feGaussianBlur stdDeviation={2} result="coloredBlur" />
             <feMerge>
@@ -95,7 +84,6 @@ export function SystemDiagram({ stage, particles, metrics, tick, showStatefulBub
             </feMerge>
           </filter>
 
-          {/* Node glow filters per health state */}
           <filter id="node-glow-stressed">
             <feGaussianBlur stdDeviation={3} result="coloredBlur" />
             <feFlood floodColor="#f59e0b" floodOpacity={0.3} result="coloredBlur" />
@@ -107,7 +95,6 @@ export function SystemDiagram({ stage, particles, metrics, tick, showStatefulBub
           </filter>
         </defs>
 
-        {/* Background grid (optional visual aid) */}
         <rect width="100%" height="100%" fill="url(#dots)" />
 
         {/* Edges (connections) */}
@@ -135,21 +122,21 @@ export function SystemDiagram({ stage, particles, metrics, tick, showStatefulBub
         {showStatefulBubble && (
           <g className="animate-pulse">
             {/* Bubble background */}
-            <rect x="330" y="40" width="240" height="80" rx="10" fill="#1e293b" stroke="#f59e0b" strokeWidth="1.5" />
+            <rect x="330" y="40" width="240" height="80" rx="10" fill="#E8E6D8" stroke="#D4654A" strokeWidth="1.5" />
             {/* Tail pointing to server */}
-            <polygon points="435,120 465,120 450,145" fill="#1e293b" stroke="#f59e0b" strokeWidth="1" />
+            <polygon points="435,120 465,120 450,145" fill="#E8E6D8" stroke="#D4654A" strokeWidth="1" />
             {/* Question mark */}
-            <text x="365" y="100" fill="#f59e0b" fontFamily="monospace" fontSize="40" fontWeight="bold" textAnchor="middle">
+            <text x="365" y="100" fill="#D4654A" fontFamily="monospace" fontSize="40" fontWeight="bold" textAnchor="middle">
               ?
             </text>
             {/* Labels */}
-            <text x="410" y="68" fill="#94a3b8" fontFamily="monospace" fontSize="11" letterSpacing="1">
+            <text x="410" y="68" fill="#7A7A6E" fontFamily="monospace" fontSize="11" letterSpacing="1">
               SESSION
             </text>
-            <text x="410" y="84" fill="#94a3b8" fontFamily="monospace" fontSize="11" letterSpacing="1">
+            <text x="410" y="84" fill="#7A7A6E" fontFamily="monospace" fontSize="11" letterSpacing="1">
               LOOKUP
             </text>
-            <text x="410" y="102" fill="#f97316" fontFamily="monospace" fontSize="10">
+            <text x="410" y="102" fill="#D4654A" fontFamily="monospace" fontSize="10">
               in-memory...
             </text>
           </g>

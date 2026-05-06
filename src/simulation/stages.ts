@@ -531,6 +531,64 @@ export const stageBTree: Stage = {
   viewBox: '0 0 1100 560',
 }
 
+export const stageTransformer: Stage = {
+  id: 'stage-transformer',
+  title: 'LLM Transformer',
+  subtitle: 'GPT Decoder — Attention, FFN, Next Token Prediction',
+  insight: 'Tokenize → embed → 2 attention layers → softmax → predict next token.',
+  displayTitle: 'Transformer Inference Engine',
+  description: 'See how a GPT-style decoder predicts the next token step by step.',
+  components: ['Tokenizer', 'Embedding', 'Multi-Head Attention', 'FFN', 'Softmax', 'Sampler'],
+  moduleType: 'transformer',
+  infoCard: {
+    technicalTerm: 'Decoder-Only Transformer (GPT Architecture)',
+    whenHappens: 'Every LLM token generation: text → tokens → embeddings → layers → probabilities → sample.',
+    whatCondition: 'Input tokenized (word split). Each token → 8-dim vector. 2 layers apply self-attention + FFN. Last token hidden state projected to 20-word vocab logits.',
+    howToResolve: 'Type a sentence, click RUN FORWARD. Use fix modes to zoom into Attention, FFN, or Prediction/Temperature.',
+  },
+  fixModes: [
+    {
+      engineId: 'transformer-attention',
+      enterLabel: 'Attention Deep Dive',
+      description: 'Q/K/V matrices, causal mask, and attention heatmap',
+      nodes: [],
+      edges: [],
+      viewBox: '0 0 1200 600',
+      technicalTerm: 'Multi-Head Self-Attention (MHSA)',
+      whenHappens: 'Every layer. Each token attends all prior tokens. Causal mask blocks future.',
+      whatCondition: 'Q×Kᵀ/√d_k → causal mask → softmax → ×V → concat heads → project.',
+      howToResolve: 'More heads = richer representations. 1/√d scaling stabilises gradients.',
+    },
+    {
+      engineId: 'transformer-ffn',
+      enterLabel: 'FFN Deep Dive',
+      description: '4× expansion, GELU activation, projection back',
+      nodes: [],
+      edges: [],
+      viewBox: '0 0 1200 600',
+      technicalTerm: 'Feed-Forward Network (FFN) with GELU',
+      whenHappens: 'After attention in every layer. Applied independently per token position.',
+      whatCondition: 'W1 expands 8→32. GELU non-linearity. W2 projects 32→8. Residual added.',
+      howToResolve: 'FFN = pattern memory. GELU smoother than ReLU. 4× expansion is standard.',
+    },
+    {
+      engineId: 'transformer-predict',
+      enterLabel: 'Prediction Step',
+      description: 'Logits, softmax, temperature, top-5 predictions',
+      nodes: [],
+      edges: [],
+      viewBox: '0 0 1200 600',
+      technicalTerm: 'Unembedding + Softmax Sampling',
+      whenHappens: 'After final layer. Last token hidden state → vocabulary probabilities.',
+      whatCondition: '8-dim hidden × 8×20 unembedding = 20 logits. Softmax(logits/τ) = probs.',
+      howToResolve: 'τ<1 = sharp/deterministic. τ>1 = flat/random. Greedy = argmax.',
+    },
+  ],
+  nodes: [],
+  edges: [],
+  viewBox: '0 0 1200 600',
+}
+
 export const stages: Stage[] = [
   stage1,
   stage2,
@@ -541,4 +599,5 @@ export const stages: Stage[] = [
   stageRedis,
   stageLSM,
   stageBTree,
+  stageTransformer,
 ]

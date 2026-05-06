@@ -79,18 +79,18 @@ export function LSMSimulation({}: LSMSimulationProps) {
   const memtablePct = (memtableUsed / state.memtableCapacity) * 100
 
   return (
-    <div className="w-full h-full bg-gray-950 flex flex-col overflow-hidden">
+    <div className="w-full h-full flex flex-col overflow-hidden" style={{ background: '#F0F0E8' }}>
       {/* SVG Visualization */}
       <div className="flex-1 flex items-center justify-center overflow-hidden px-4">
         <svg viewBox="0 0 1200 580" preserveAspectRatio="xMidYMid meet" className="max-w-full max-h-full">
-          <rect width="1200" height="580" fill="#030712" />
+          <rect width="1200" height="580" fill="#F0F0E8" />
 
           {/* WAL Panel (left) */}
           <g>
             <text x="20" y="25" fill="#22c55e" fontSize="13" fontWeight="bold" fontFamily="monospace">
               WAL
             </text>
-            <rect x="12" y="35" width="140" height="520" rx="4" fill="#1f2937" stroke="#4b5563" strokeWidth="1" />
+            <rect x="12" y="35" width="140" height="520" rx="4" fill="#E8E6D8" stroke="#4b5563" strokeWidth="1" />
             {state.wal.slice(-10).map((entry, i) => (
               <text
                 key={i}
@@ -111,7 +111,7 @@ export function LSMSimulation({}: LSMSimulationProps) {
               MEMTABLE
             </text>
             {/* Capacity bar */}
-            <rect x="170" y="35" width="200" height="20" rx="3" fill="#1f2937" stroke="#4b5563" strokeWidth="1" />
+            <rect x="170" y="35" width="200" height="20" rx="3" fill="#E8E6D8" stroke="#4b5563" strokeWidth="1" />
             <motion.rect
               x="173"
               y="38"
@@ -121,7 +121,7 @@ export function LSMSimulation({}: LSMSimulationProps) {
               animate={{ width: Math.min((memtableUsed / state.memtableCapacity) * 194, 194) }}
               transition={{ duration: 0.3 }}
             />
-            <text x="378" y="47" fill="#9ca3af" fontSize="9" fontFamily="monospace">
+            <text x="378" y="47" fill="#7A7A6E" fontSize="9" fontFamily="monospace">
               {memtableUsed}/{state.memtableCapacity}
             </text>
 
@@ -134,7 +134,7 @@ export function LSMSimulation({}: LSMSimulationProps) {
                   width="200"
                   height="24"
                   rx="2"
-                  fill="#1f2937"
+                  fill="#E8E6D8"
                   stroke={entry.tombstone ? '#dc2626' : '#0ea5e9'}
                   strokeWidth="1"
                 />
@@ -159,15 +159,15 @@ export function LSMSimulation({}: LSMSimulationProps) {
             </text>
             {state.sstables[0].map((sstable, idx) => (
               <g key={`l0-${idx}`}>
-                <rect x={170 + idx * 140} y="300" width="130" height="100" rx="3" fill="#1f2937" stroke="#0ea5e9" strokeWidth="1" />
+                <rect x={170 + idx * 140} y="300" width="130" height="100" rx="3" fill="#E8E6D8" stroke="#0ea5e9" strokeWidth="1" />
                 <text x={180 + idx * 140} y="320" fill="#38bdf8" fontSize="10" fontWeight="bold" fontFamily="monospace">
                   {sstable.id}
                 </text>
-                <text x={180 + idx * 140} y="338" fill="#9ca3af" fontSize="8" fontFamily="monospace">
+                <text x={180 + idx * 140} y="338" fill="#7A7A6E" fontSize="8" fontFamily="monospace">
                   {sstable.entries.length} keys
                 </text>
                 {/* Bloom filter */}
-                <text x={180 + idx * 140} y="355" fill="#9ca3af" fontSize="8" fontFamily="monospace">
+                <text x={180 + idx * 140} y="355" fill="#7A7A6E" fontSize="8" fontFamily="monospace">
                   Bloom:
                 </text>
                 {sstable.bloomFilter.bits.map((bit, b) => (
@@ -192,11 +192,11 @@ export function LSMSimulation({}: LSMSimulationProps) {
             </text>
             {state.sstables[1]?.map((sstable, idx) => (
               <g key={`l1-${idx}`}>
-                <rect x={170 + idx * 160} y="455" width="150" height="80" rx="3" fill="#1f2937" stroke="#f59e0b" strokeWidth="1" />
+                <rect x={170 + idx * 160} y="455" width="150" height="80" rx="3" fill="#E8E6D8" stroke="#f59e0b" strokeWidth="1" />
                 <text x={180 + idx * 160} y="475" fill="#fcd34d" fontSize="10" fontWeight="bold" fontFamily="monospace">
                   {sstable.id}
                 </text>
-                <text x={180 + idx * 160} y="492" fill="#9ca3af" fontSize="8" fontFamily="monospace">
+                <text x={180 + idx * 160} y="492" fill="#7A7A6E" fontSize="8" fontFamily="monospace">
                   {sstable.entries.length} keys
                 </text>
                 {sstable.bloomFilter.bits.map((bit, b) => (
@@ -224,10 +224,10 @@ export function LSMSimulation({}: LSMSimulationProps) {
       </div>
 
       {/* Controls */}
-      <div className="bg-gray-900 border-t border-gray-700 p-4 space-y-3">
+      <div className="border-t p-4 space-y-3" style={{ background: '#E8E6D8', borderColor: '#B0B09A' }}>
         <div className="flex gap-2 items-end">
           <div className="flex-1">
-            <label className="block text-xs text-gray-400 mb-1">Key</label>
+            <label className="block text-xs text-[#7A7A6E] mb-1">Key</label>
             <input
               type="text"
               value={inputKey}
@@ -236,11 +236,11 @@ export function LSMSimulation({}: LSMSimulationProps) {
                 if (e.key === 'Enter' && inputValue) handleSet()
               }}
               placeholder="user:1"
-              className="w-full px-2 py-1 bg-gray-800 border border-gray-600 text-gray-100 text-xs font-monospace rounded"
+              className="w-full px-2 py-1 bg-[#F0F0E8] border border-[#B0B09A] text-[#2A2A28] text-xs font-monospace rounded"
             />
           </div>
           <div className="flex-1">
-            <label className="block text-xs text-gray-400 mb-1">Value</label>
+            <label className="block text-xs text-[#7A7A6E] mb-1">Value</label>
             <input
               type="text"
               value={inputValue}
@@ -249,7 +249,7 @@ export function LSMSimulation({}: LSMSimulationProps) {
                 if (e.key === 'Enter') handleSet()
               }}
               placeholder="Alice"
-              className="w-full px-2 py-1 bg-gray-800 border border-gray-600 text-gray-100 text-xs font-monospace rounded"
+              className="w-full px-2 py-1 bg-[#F0F0E8] border border-[#B0B09A] text-[#2A2A28] text-xs font-monospace rounded"
             />
           </div>
           <button

@@ -220,7 +220,7 @@ export function ComponentBox({ node, metrics, stageId }: ComponentBoxProps) {
         width={84}
         height={50}
         rx={6}
-        fill="#1f2937"
+        fill="#F0F0E8"
         stroke={borderColor}
         strokeWidth={health === 'overloaded' || health === 'dead' ? 3 : 2}
       />
@@ -261,7 +261,7 @@ export function ComponentBox({ node, metrics, stageId }: ComponentBoxProps) {
           y={11}
           textAnchor="middle"
           fontSize={8}
-          fill="#9ca3af"
+          fill="#7A7A6E"
           fontFamily="monospace"
         >
           {statusText}
@@ -300,7 +300,7 @@ export function ComponentBox({ node, metrics, stageId }: ComponentBoxProps) {
         y={32}
         textAnchor="middle"
         fontSize={10}
-        fill="#d1d5db"
+        fill="#2A2A28"
         fontFamily="system-ui, sans-serif"
       >
         {node.label}

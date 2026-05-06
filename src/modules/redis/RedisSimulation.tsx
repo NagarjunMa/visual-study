@@ -94,7 +94,7 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
   const memoryPct = (memoryUsed / state.capacity) * 100
 
   return (
-    <div className="w-full h-full bg-gray-950 flex flex-col overflow-hidden relative">
+    <div className="w-full h-full flex flex-col overflow-hidden relative" style={{ background: '#F0F0E8' }}>
       {/* SVG Visualization */}
       <div className="flex-1 flex items-center justify-center overflow-hidden px-4 relative">
         {/* Crash overlay */}
@@ -105,11 +105,11 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
         )}
         <svg viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid meet" className="max-w-full max-h-full">
           {/* Background */}
-          <rect width="1200" height="600" fill="#030712" />
+          <rect width="1200" height="600" fill="#F0F0E8" />
 
           {/* Memory Bar */}
           <g>
-            <rect x="50" y="20" width="400" height="30" rx="4" fill="#1f2937" stroke="#4b5563" strokeWidth="2" />
+            <rect x="50" y="20" width="400" height="30" rx="4" fill="#E8E6D8" stroke="#B0B09A" strokeWidth="2" />
             <motion.rect
               x="54"
               y="24"
@@ -119,7 +119,7 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
               animate={{ width: Math.min((memoryUsed / state.capacity) * 392, 392) }}
               transition={{ duration: 0.3 }}
             />
-            <text x="500" y="40" fill="#9ca3af" fontSize="12" fontFamily="monospace">
+            <text x="500" y="40" fill="#7A7A6E" fontSize="12" fontFamily="monospace">
               Memory: {memoryUsed}/{state.capacity} ({memoryPct.toFixed(0)}%)
             </text>
           </g>
@@ -136,7 +136,7 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
                 <text
                   x="50"
                   y={110 + bucketIdx * 50}
-                  fill="#94a3b8"
+                  fill="#7A7A6E"
                   fontSize="11"
                   fontFamily="monospace"
                 >{`B${bucketIdx}:`}</text>
@@ -156,7 +156,7 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
                       width="120"
                       height="28"
                       rx="3"
-                      fill="#1f2937"
+                      fill="#E8E6D8"
                       stroke="#0ea5e9"
                       strokeWidth="1"
                     />
@@ -202,7 +202,7 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
             )}
 
             {!state.lruHead && (
-              <text x="50" y="555" fill="#666" fontSize="12" fontFamily="monospace">
+              <text x="50" y="555" fill="#7A7A6E" fontSize="12" fontFamily="monospace">
                 (empty)
               </text>
             )}
@@ -223,14 +223,14 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
       </div>
 
       {/* Controls Panel */}
-      <div className="bg-gray-900 border-t border-gray-700 p-4 space-y-3">
+      <div className="border-t p-4 space-y-3" style={{ background: '#E8E6D8', borderColor: '#B0B09A' }}>
         {/* Persistence Mode */}
         <div className="flex gap-4 items-center">
           <label className="text-xs font-pixel text-amber-500 uppercase">Persistence:</label>
           <button
             onClick={() => dispatch({ type: 'set-persistence', mode: 'none' })}
             className={`px-2 py-1 text-xs font-pixel ${
-              state.persistence === 'none' ? 'bg-red-600 text-white' : 'bg-gray-700 text-gray-300'
+              state.persistence === 'none' ? 'bg-red-600 text-white' : 'bg-gray-300 text-gray-700'
             }`}
           >
             None (RAM only)
@@ -238,7 +238,7 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
           <button
             onClick={() => dispatch({ type: 'set-persistence', mode: 'rdb' })}
             className={`px-2 py-1 text-xs font-pixel ${
-              state.persistence === 'rdb' ? 'bg-yellow-600 text-white' : 'bg-gray-700 text-gray-300'
+              state.persistence === 'rdb' ? 'bg-yellow-600 text-white' : 'bg-gray-300 text-gray-700'
             }`}
           >
             RDB (snapshots)
@@ -246,7 +246,7 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
           <button
             onClick={() => dispatch({ type: 'set-persistence', mode: 'aof' })}
             className={`px-2 py-1 text-xs font-pixel ${
-              state.persistence === 'aof' ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-300'
+              state.persistence === 'aof' ? 'bg-green-600 text-white' : 'bg-gray-300 text-gray-700'
             }`}
           >
             AOF (full log)
@@ -256,7 +256,7 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
         {/* Input Fields */}
         <div className="flex gap-2 items-end">
           <div className="flex-1">
-            <label className="block text-xs text-gray-400 mb-1">Key</label>
+            <label className="block text-xs mb-1" style={{ color: '#7A7A6E' }}>Key</label>
             <input
               type="text"
               value={inputKey}
@@ -266,11 +266,12 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
               }}
               disabled={state.crashed}
               placeholder="user:1"
-              className="w-full px-2 py-1 bg-gray-800 border border-gray-600 text-gray-100 text-xs font-monospace rounded disabled:opacity-50"
+              className="w-full px-2 py-1 border text-xs font-monospace rounded disabled:opacity-50"
+              style={{ background: '#F0F0E8', borderColor: '#B0B09A', color: '#2A2A28' }}
             />
           </div>
           <div className="flex-1">
-            <label className="block text-xs text-gray-400 mb-1">Value</label>
+            <label className="block text-xs mb-1" style={{ color: '#7A7A6E' }}>Value</label>
             <input
               type="text"
               value={inputValue}
@@ -280,7 +281,8 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
               }}
               disabled={state.crashed}
               placeholder="Alice"
-              className="w-full px-2 py-1 bg-gray-800 border border-gray-600 text-gray-100 text-xs font-monospace rounded disabled:opacity-50"
+              className="w-full px-2 py-1 border text-xs font-monospace rounded disabled:opacity-50"
+              style={{ background: '#F0F0E8', borderColor: '#B0B09A', color: '#2A2A28' }}
             />
           </div>
           <button
@@ -327,14 +329,14 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
               dispatch({ type: 'clear' })
               setMessage('Cleared all data')
             }}
-            className="px-3 py-1 bg-gray-600 text-white text-xs font-pixel rounded hover:bg-gray-700"
+            className="px-3 py-1 bg-gray-400 text-xs font-pixel rounded hover:bg-gray-500" style={{ color: '#2A2A28' }}
           >
             Clear
           </button>
         </div>
 
         {/* Persistence State Panel */}
-        <div className="bg-gray-800 rounded p-2 text-xs font-monospace text-gray-300 space-y-1 max-h-32 overflow-auto">
+        <div className="rounded p-2 text-xs font-monospace space-y-1 max-h-32 overflow-auto" style={{ background: '#F0F0E8', color: '#2A2A28' }}>
           {state.persistence === 'none' && (
             <div className="text-red-400">
               💾 Persistence: NONE (RAM only)
@@ -344,7 +346,7 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
             <div className="space-y-1">
               <div className="text-yellow-400">💾 RDB Snapshots: {state.rdbSnapshot.length} keys</div>
               {state.rdbSnapshot.length > 0 && (
-                <div className="text-gray-400 ml-2">Last: {state.rdbSnapshot.slice(0, 2).map(e => e.key).join(', ')}{state.rdbSnapshot.length > 2 ? '...' : ''}</div>
+                <div className="ml-2" style={{ color: '#7A7A6E' }}>Last: {state.rdbSnapshot.slice(0, 2).map(e => e.key).join(', ')}{state.rdbSnapshot.length > 2 ? '...' : ''}</div>
               )}
             </div>
           )}
@@ -352,7 +354,7 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
             <div className="space-y-1">
               <div className="text-green-400">📝 AOF Log: {state.aofLog.length} commands</div>
               {state.aofLog.length > 0 && (
-                <div className="text-gray-400 ml-2 max-h-16 overflow-y-auto">
+                <div className="ml-2 max-h-16 overflow-y-auto" style={{ color: '#7A7A6E' }}>
                   {state.aofLog.slice(-3).map((cmd, i) => (
                     <div key={i}>&gt; {cmd}</div>
                   ))}
@@ -390,7 +392,7 @@ function LRUChainRenderer({
       {nodes.map((key, idx) => (
         <g key={`lru-${key}`}>
           {/* Box */}
-          <rect x={startX + idx * 100} y={y} width="85" height="25" rx="3" fill="#1f2937" stroke="#fbbf24" strokeWidth="1" />
+          <rect x={startX + idx * 100} y={y} width="85" height="25" rx="3" fill="#E8E6D8" stroke="#fbbf24" strokeWidth="1" />
           {/* Label */}
           <text
             x={startX + idx * 100 + 43}
@@ -409,14 +411,14 @@ function LRUChainRenderer({
                 y1={y + 12}
                 x2={startX + (idx + 1) * 100}
                 y2={y + 12}
-                stroke="#666"
+                stroke="#7A7A6E"
                 strokeWidth="1"
               />
               <polygon
                 points={`${startX + (idx + 1) * 100},${y + 12} ${startX + (idx + 1) * 100 - 4},${y + 10} ${startX + (idx + 1) * 100 - 4},${
                   y + 14
                 }`}
-                fill="#666"
+                fill="#7A7A6E"
               />
             </>
           )}
@@ -424,10 +426,10 @@ function LRUChainRenderer({
       ))}
 
       {/* MRU/LRU labels */}
-      <text x={startX} y={y - 8} fill="#888" fontSize="9" fontFamily="monospace">
+      <text x={startX} y={y - 8} fill="#7A7A6E" fontSize="9" fontFamily="monospace">
         MRU
       </text>
-      <text x={startX + nodes.length * 100 - 30} y={y - 8} fill="#888" fontSize="9" fontFamily="monospace">
+      <text x={startX + nodes.length * 100 - 30} y={y - 8} fill="#7A7A6E" fontSize="9" fontFamily="monospace">
         LRU
       </text>
     </g>

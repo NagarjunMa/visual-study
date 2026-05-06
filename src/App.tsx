@@ -7,6 +7,7 @@ import { InfoCard } from './components/InfoCard'
 import { RedisSimulation } from './modules/redis/RedisSimulation'
 import { LSMSimulation } from './modules/lsm/LSMSimulation'
 import { BTreeSimulation } from './modules/btree/BTreeSimulation'
+import { TransformerSimulation } from './modules/transformer/TransformerSimulation'
 
 function App() {
   const [currentStageIndex, setCurrentStageIndex] = useState(0)
@@ -49,17 +50,17 @@ function App() {
   // Simulation view: sidebar + diagram split layout
   if (!showSelector) {
     return (
-      <div className="flex w-full h-screen bg-gray-950 text-white overflow-hidden">
+      <div className="flex w-full h-screen overflow-hidden" style={{ background: 'var(--retro-surface)' }}>
         {/* LEFT: InfoCard sidebar */}
         <div
-          className="flex-shrink-0 w-72 h-full overflow-y-auto bg-gray-950"
+          className="flex-shrink-0 w-72 h-full overflow-y-auto"
           style={{
-            borderRight: '1px solid rgba(255,176,0,0.3)',
-            boxShadow: 'inset -2px 0 0 rgba(255,176,0,0.05), inset -1px 0 0 rgba(255,176,0,0.15)',
+            background: 'var(--retro-surface)',
+            borderRight: '2px solid var(--retro-border)',
           }}
         >
           {/* ESC button at top of sidebar */}
-          <div className="p-3" style={{ borderBottom: '1px solid rgba(255,176,0,0.2)' }}>
+          <div className="p-3" style={{ borderBottom: '1px solid var(--retro-border)' }}>
             <button
               className="esc-btn show"
               style={{ position: 'static', opacity: 1, transform: 'none' }}
@@ -69,16 +70,16 @@ function App() {
               }}
               aria-label="Back to selector"
             >
-              <span className="esc-arrow">▶</span> ESC
+              <span className="esc-arrow">◀</span> ESC
             </button>
           </div>
 
           {/* Stage title */}
-          <div className="px-4 pt-4 pb-2" style={{ borderBottom: '1px solid rgba(255,176,0,0.25)' }}>
-            <div className="font-pixel text-xs text-gray-600 mb-1">SIMULATION</div>
-            <div className="font-terminal text-xl text-amber-500">{currentStage.displayTitle}</div>
+          <div className="px-4 pt-4 pb-2" style={{ borderBottom: '1px solid var(--retro-border)' }}>
+            <div className="font-pixel mb-1" style={{ color: 'var(--retro-muted)', fontSize: '7px', letterSpacing: '0.1em' }}>SIMULATION</div>
+            <div className="font-mono-clean text-base font-bold" style={{ color: 'var(--retro-accent)' }}>{currentStage.displayTitle}</div>
             {activeFix && (
-              <div className="font-terminal text-xs text-green-400 mt-1">{activeFix.description}</div>
+              <div className="font-mono-clean text-xs mt-1" style={{ color: '#4CAF50' }}>{activeFix.description}</div>
             )}
           </div>
 
@@ -88,6 +89,7 @@ function App() {
             fixModes={currentStage.fixModes}
             fixModeIndex={fixModeIndex}
             onAdvanceFix={() => setFixModeIndex(idx => idx + 1)}
+            onSetFixMode={currentStage.moduleType === 'transformer' ? setFixModeIndex : undefined}
           />
         </div>
 
@@ -123,6 +125,8 @@ function App() {
             <LSMSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
           ) : currentStage.moduleType === 'btree' ? (
             <BTreeSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
+          ) : currentStage.moduleType === 'transformer' ? (
+            <TransformerSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
           ) : (
             <SystemDiagram
               stage={diagramStage}
@@ -138,7 +142,7 @@ function App() {
   }
 
   return (
-    <div className="relative w-full h-screen bg-gray-950 text-white overflow-hidden">
+    <div className="relative w-full h-screen overflow-hidden" style={{ background: 'var(--retro-bg)', color: 'var(--retro-text)' }}>
       {/* SELECTOR OVERLAY — hero + stage grid */}
       <LandingPage
         stages={stages}

@@ -8,6 +8,22 @@ export default {
   theme: {
     extend: {
       colors: {
+        retro: {
+          bg: '#C5C6A8',        // sage/olive background
+          surface: '#F0F0E8',   // warm cream cards
+          'surface-alt': '#E8E6D8', // slightly darker cream
+          accent: '#D4654A',    // coral accent
+          'accent-hover': '#C0553C',
+          blue: '#4A6FA5',      // retro window blue
+          'blue-dark': '#3A5A8A',
+          gold: '#C4A55A',      // button border gold
+          'btn': '#F5E6B8',     // warm cream button
+          'btn-hover': '#EDD99E',
+          text: '#2A2A28',      // near-black text
+          muted: '#7A7A6E',     // olive gray muted
+          border: '#B0B09A',    // sage border
+          'border-dark': '#8A8A76',
+        },
         dark: {
           50: '#f9fafb',
           100: '#f3f4f6',
