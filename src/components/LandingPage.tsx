@@ -14,22 +14,40 @@ interface Track {
   stageIndices: number[]
 }
 
+const DB_TYPES = new Set(['redis-kv', 'lsm', 'btree'])
+const NET_TYPES = new Set(['tcp'])
+const MSG_TYPES = new Set(['kafka'])
+
 function getTracks(stages: Stage[]): Track[] {
   const sysDesign: number[] = []
   const database: number[] = []
   const ai: number[] = []
+  const networking: number[] = []
+  const messaging: number[] = []
 
   stages.forEach((stage, idx) => {
     if (stage.moduleType === 'transformer') ai.push(idx)
-    else if (stage.moduleType) database.push(idx)
-    else sysDesign.push(idx)
+    else if (stage.moduleType && DB_TYPES.has(stage.moduleType)) database.push(idx)
+    else if (stage.moduleType && NET_TYPES.has(stage.moduleType)) networking.push(idx)
+    else if (stage.moduleType && MSG_TYPES.has(stage.moduleType)) messaging.push(idx)
+    else if (!stage.moduleType) sysDesign.push(idx)
   })
 
-  return [
+  const tracks: Track[] = [
     { name: 'SYSTEM DESIGN', description: `${sysDesign.length} simulations — scaling distributed systems`, stageIndices: sysDesign },
     { name: 'DATABASE MECHANISMS', description: `${database.length} simulations — storage engine internals`, stageIndices: database },
     { name: 'TRANSFORMER / AI', description: `${ai.length} simulation — LLM inference pipeline`, stageIndices: ai },
   ]
+
+  if (networking.length > 0) {
+    tracks.push({ name: 'NETWORKING', description: `${networking.length} simulation — protocol internals`, stageIndices: networking })
+  }
+
+  if (messaging.length > 0) {
+    tracks.push({ name: 'MESSAGE BROKERS', description: `${messaging.length} simulation — distributed messaging`, stageIndices: messaging })
+  }
+
+  return tracks
 }
 
 // FAQ data

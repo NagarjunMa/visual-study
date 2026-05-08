@@ -8,15 +8,15 @@ interface ComponentBoxProps {
 }
 
 const typeConfig: Record<string, { color: string; name: string }> = {
-  client: { color: '#3b82f6', name: 'CLIENT' },
-  server: { color: '#22c55e', name: 'SERVER' },
-  database: { color: '#0ea5e9', name: 'DATABASE' },
-  'db-replica': { color: '#86efac', name: 'DB REPLICA' },
-  'load-balancer': { color: '#a855f7', name: 'LOAD BALANCER' },
-  cache: { color: '#f59e0b', name: 'CACHE' },
-  'api-gateway': { color: '#6366f1', name: 'API GATEWAY' },
-  'session-store': { color: '#06b6d4', name: 'SESSION' },
-  'cache-cluster': { color: '#f59e0b', name: 'CACHE CLUSTER' },
+  client: { color: '#2563eb', name: 'CLIENT' },
+  server: { color: '#16a34a', name: 'SERVER' },
+  database: { color: '#0284c7', name: 'DATABASE' },
+  'db-replica': { color: '#059669', name: 'DB REPLICA' },
+  'load-balancer': { color: '#7c3aed', name: 'LOAD BALANCER' },
+  cache: { color: '#d97706', name: 'CACHE' },
+  'api-gateway': { color: '#4f46e5', name: 'API GATEWAY' },
+  'session-store': { color: '#0891b2', name: 'SESSION' },
+  'cache-cluster': { color: '#d97706', name: 'CACHE CLUSTER' },
 }
 
 function getStatusText(node: SimNode, metrics?: any, stageId?: string): string {
@@ -220,7 +220,7 @@ export function ComponentBox({ node, metrics, stageId }: ComponentBoxProps) {
         width={84}
         height={50}
         rx={6}
-        fill="#F0F0E8"
+        fill="#E0DED0"
         stroke={borderColor}
         strokeWidth={health === 'overloaded' || health === 'dead' ? 3 : 2}
       />

@@ -1,133 +1,84 @@
 VISUAL LEARNING - PROGRESS TRACKER
 ===================================
-Date: 2026-04-27
-Last commit: ed21467
+Updated: 2026-05-07
+
+=== CURRENT STATE ===
+10 stages live, 4 tracks, retro clean UI
+Build: 448 modules, ~135KB gzip
 
 === COMPLETED PHASES ===
 
 PHASE 0: SYSTEM DESIGN SIMULATOR (Stages 1-6)
-- Baseline architecture visualization
-- Metrics computation (RPS, latency, CPU, pool usage)
-- Particle flow animations
-- Health state visualization (green/amber/red)
-- Fix-mode progressions (problem → fix 1 → fix 2 → optimized)
+✓ 6 stages with particle-based metrics visualization
+✓ Fix-mode progressions (problem → fix 1 → fix 2 → optimized)
+✓ Live metrics HUD (RPS, latency, CPU, pool, cache hit)
+✓ Health state visualization (green/amber/red pulse rings)
 
-PHASE 1: REDIS KV STORE MODULE (Stage 7)
-✓ Hash table with 8 buckets
-✓ LRU eviction policy (MRU/LRU chain)
+PHASE 1: REDIS KV STORE (Stage 7)
+✓ Hash table with 8 buckets, LRU eviction
 ✓ Three persistence modes: none, RDB, AOF
-✓ Crash recovery logic
-✓ Bug fixes:
-  - Redis crash recovery: useEffect syncs fixModeIndex → persistence mode
-  - AOF replay: isolation (persistence: 'none' during replay)
-  - Entry positioning: corrected y-coordinates per bucket
-  - Crash visual feedback: red overlay on crash state
-  - Persistence panel: shows RDB snapshots or AOF log
-✓ Operations: SET, GET, DELETE, CRASH, RESTART, CLEAR
-✓ Fix modes: RDB snapshots, AOF full replay
+✓ Crash recovery with AOF replay
+✓ Bug fixes: fixModeIndex sync, AOF log doubling, entry positioning
 
-PHASE 2: CASSANDRA LSM TREE MODULE (Stage 8)
-✓ Write-Ahead Log (WAL)
-✓ In-memory Memtable (sorted by key)
-✓ Level 0 & Level 1 SSTables (immutable, disk)
-✓ Bloom filters (8-bit per SSTable, 2-hash)
-✓ Compaction: merge L0→L1, remove duplicates
+PHASE 2: CASSANDRA LSM TREE (Stage 8)
+✓ WAL → Memtable → L0/L1 SSTables
+✓ Bloom filters (8-bit, 2-hash), compaction
 ✓ Read path: Memtable → Bloom check → SSTable scan
-✓ Tombstone deletion markers
-✓ Operations: SET, GET, DELETE, FLUSH MEMTABLE, COMPACT L0
-✓ Visualization: WAL log, Memtable table, L0/L1 file boxes, Bloom bits
-✓ Fix modes: Bloom filter optimization, Compaction strategy
 
-PHASE 3: POSTGRESQL B+ TREE MODULE (Stage 9)
-✓ B+ Tree index structure (order 3)
-✓ Page split logic (leaf & internal splits)
-✓ Root split (height increase)
-✓ Leaf linking (doubly-linked chain for range scans)
-✓ CTID storage (physical row locators)
-✓ Operations: INSERT, SEARCH, RANGE SCAN, CLEAR
-✓ Layout bug fixes:
-  - Two-pass positioning algorithm
-  - Pass 1: leaves spread evenly by sorted order
-  - Pass 2: internal nodes positioned as midpoint of children
-  - Proper y-coordinates by level depth
-  - Parent→child edges connect correctly
-  - Leaf rightLink arrows connect actual leaf nodes
-✓ Fix modes: Range scan efficiency (leaf chain benefit)
+PHASE 3: POSTGRESQL B+ TREE (Stage 9)
+✓ Order-3 B+ tree with leaf/internal splits
+✓ Two-pass layout algorithm (leaves by rightLink chain, internals by child midpoint)
+✓ Range scan via leaf chain
+
+PHASE 4: LLM TRANSFORMER (Stage 10)
+✓ GPT-style decoder: tokenize → embed → 2 attention layers → FFN → softmax
+✓ Real math: matVec, layerNorm, GELU, softmax, causal mask
+✓ DIM=8, NUM_HEADS=2, NUM_LAYERS=2, FFN_DIM=32, VOCAB=20
+✓ Deterministic weights (LCG seed=42)
+✓ Fixed input "The cat sat on", animated forward pass (600ms/phase)
+✓ 3 fix modes: Attention heatmap, FFN neurons/GELU, Prediction/temperature
+✓ Sidebar toggle buttons (not sequential progression)
+
+PHASE 5: UI REDESIGN — Retro Clean Palette
+✓ Color scheme: dark CRT → sage/olive bg (#C5C6A8), cream surfaces (#F0F0E8), coral accent (#D4654A)
+✓ Typography: added Space Mono for body, pixel font for labels
+✓ Buttons: retro pill with gold double border (.retro-btn)
+✓ Navigation: flat grid → collapsible 3-track folder tree
+✓ Window chrome: retro blue title bars, colored controls
+✓ ALL simulation views updated to retro palette (diagram, Redis, LSM, BTree, Transformer)
+✓ Sidebar + InfoCard restyled
+
+PHASE 6: LANDING PAGE CONTENT
+✓ Value Proposition section (See It / Break It / Fix It)
+✓ Who Is This For section (Interview Prep / CS Students / Engineers)
+✓ FAQ section (7 SEO-optimized questions)
+✓ Final CTA section + Footer
+✓ Stats bar + SEO meta tags
+
+PHASE 7: SCROLL ANIMATIONS
+✓ Shared IntersectionObserver (fire-once, data-animate)
+✓ CSS keyframes: section-fade-up, progress-load, monitor-flicker, scanline-pass
+✓ Value Prop: progress bar + window cascade (150ms stagger)
+✓ FAQ: monitor flicker, CTA: scanline sweep, Footer: fade-up
+✓ prefers-reduced-motion support
+✓ skipHero: all sections revealed immediately on ESC back
 
 === BUG FIXES ===
 
-Redis Module (Phase 1):
-- fixModeIndex prop changes ignored: Added useEffect to dispatch set-persistence
-- AOF log doubling on crash: Set persistence: 'none' during replay, restore after
-- Entry text y-position hardcoded: Corrected to per-bucket positioning
-- Eviction per-bucket instead of total: Fixed to check total capacity
-- RDB snapshot never triggers: Now triggers every 5 SETs (RDB_SAVE_INTERVAL)
-- Crash overlay missing: Added red semi-transparent overlay with "⚠ CRASHED" text
-- Missing persistence visualization: Added panel showing RDB snapshots or AOF log
+Redis: fixModeIndex sync, AOF doubling, eviction scope, RDB timing
+B+ Tree: layout x=0 bug, edge routing, leaf rightLink arrows
+Transformer: unused imports/variables
+UI: retro-window opacity blocking in revealed scroll sections
 
-B+ Tree Module (Phase 3):
-- All nodes stacking at x=0: Replaced recursive getPageLayout() with two-pass computeLayout()
-- Leaf positioning: Now spread evenly across SVG width based on sorted order
-- Parent-child edge routing: Edges now connect from correct slot to child top-center
-- Leaf rightLink arrows: Now connect from leaf right edge to next leaf left edge
-- Node width calculation: Dynamic based on key count (min 150px)
+=== PLANNED (Stages 11-15) ===
 
-=== CODE METRICS ===
+Stage 11: TCP 3-Way Handshake — SYN/ACK/RST, connection lifecycle, TIME-WAIT
+Stage 12: Virtual Memory & Page Faults — TLB, page table walk, page replacement
+Stage 13: Raft Consensus — leader election, log replication, split brain
+Stage 14: Event Loop & Task Queues — call stack, microtask/macrotask, Promise vs setTimeout
+Stage 15: Rate Limiting — token bucket, sliding window log, sliding window counter
 
-Files created: 8
-- src/modules/redis/: 3 files (types, engine, component)
-- src/modules/lsm/: 3 files (types, engine, component)
-- src/modules/btree/: 3 files (types, engine, component)
+=== FILES ===
 
-Files modified: 5
-- src/App.tsx: +6 lines (imports, conditional routing)
-- src/simulation/stages.ts: +76 lines (2 new stages, fixModes)
-- src/modules/redis/redis.types.ts: 56→25 lines (streamlined)
-- src/modules/redis/RedisEngine.ts: 131 lines (refactored)
-- src/modules/redis/RedisSimulation.tsx: +87 lines (UI enhancements)
-
-Total lines: 1412 insertions, 109 deletions
-Build size: 122.25 KB gzip (398.98 KB uncompressed)
-
-=== ARCHITECTURE ===
-
-Stages 1-6 (System Design):
-- useSimulation hook: metrics computation, particle spawning
-- SystemDiagram.tsx: particle renderer, node health computation
-- engine.ts: computeMetrics(), getWaypoints() per engineId
-
-Stages 7-9 (Database Modules):
-- Each module: useReducer(reducer, initialState) pattern
-- Module-specific engine: pure functions for state transitions
-- App.tsx: conditional moduleType routing
-- Stage interface: moduleType?: 'btree' | 'lsm' | 'redis-kv'
-
-=== TESTING STATUS ===
-
-✓ npm run build: passes (446 modules, no TS errors)
-✓ Stage 7 (Redis): manual test OK
-  - Base mode (none): data lost on crash ✓
-  - RDB mode: snapshots on 5th SET, recovery on crash ✓
-  - AOF mode: log replay, no doubling on consecutive crashes ✓
-✓ Stage 8 (Cassandra LSM): manual test OK
-  - SET: memtable + WAL ✓
-  - Flush: creates L0 SSTable ✓
-  - Bloom filter bits toggle ✓
-  - Compaction: L0→L1 ✓
-✓ Stage 9 (PostgreSQL B+ Tree): manual test needed
-  - INSERT sequence: splits visible ✓
-  - Layout: nodes properly spread, edges connect ✓
-  - Range scan: needs full test sequence
-
-=== KNOWN ISSUES ===
-
-None blocking. All critical bugs fixed in this phase.
-
-=== NEXT STEPS (OPTIONAL) ===
-
-1. Add more B+ Tree operations: DELETE, bulk insert
-2. Cassandra module: add READ_REPAIR, HINTED_HANDOFF
-3. Redis module: add SCAN command, expiry background cleanup
-4. Performance optimization: memoize layout computation in B+ Tree
-5. Analytics: track which stages users visit most, time spent
-6. Export/import: save simulation states as JSON
+Modules: 12 files (4 modules × 3 files)
+  src/modules/{redis,lsm,btree,transformer}/ — types, engine, simulation each

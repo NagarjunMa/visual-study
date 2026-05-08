@@ -1,178 +1,187 @@
-# Visual Learning - System Design Visualization Tool
+# Visual Learning - Interactive Systems Visualization
 
 ## Project
 
-Interactive learning simulator: 6 system design stages + 3 database internals modules = 9 total stages. Teaches scaling patterns, resilience, and database storage through real-time visualization.
+Interactive learning simulator: 12 stages across 6 tracks. Teaches system design, database internals, LLM inference, networking, and message brokers through real-time SVG visualization.
 
-**Content:** System design (stages 1-6) + Database modules (stages 7-9):
-- Stages 1-6: distributed system scaling, bottlenecks, caching, replication
-- Stage 7: Redis KV store (hash table, LRU, persistence modes)
-- Stage 8: Cassandra LSM tree (Memtable, SSTables, Bloom filters, compaction)
-- Stage 9: PostgreSQL B+ Tree (index structure, splits, range scans)
+**Tracks & Stages:**
+- **System Design (1-6):** Distributed system scaling, bottlenecks, caching, replication
+- **Database Internals (7-9):** Redis KV, Cassandra LSM Tree, PostgreSQL B+ Tree
+- **AI/ML (10):** LLM Transformer inference (tokenize → embed → attention → FFN → softmax → predict)
+- **Networking (11):** TCP 3-way handshake, SYN timeout, RST, connection close, TIME-WAIT
+- **Message Brokers (12):** Kafka — progressive reveal: log → partitions → replication → failure → consumer groups
 
-**Target:** System design interview prep; database internals learning.
+**Target:** System design interview prep; database internals learning; AI/ML understanding; networking fundamentals; distributed messaging.
 
 ## Tech Stack
 
 - **React 18** - Component hooks for state management and lifecycle
 - **Vite** - Fast ES build + HMR development experience
 - **Framer Motion** - Physics-based animations for smooth particle transitions
-- **Tailwind CSS** - Utility-first styling, dark theme optimized
+- **Tailwind CSS** - Utility-first styling, retro clean theme (sage/cream palette)
 - **SVG** - Vector graphics for scalable node boxes, flowing connections, particles
 - **TypeScript** - Strict type safety for simulation logic
+
+## Design System
+
+**Retro-OS Clean aesthetic:**
+- Background: sage/olive `#C5C6A8`
+- Surfaces: warm cream `#F0F0E8`, alt `#E8E6D8`
+- Accent: coral `#D4654A`
+- Window chrome: retro blue `#4A6FA5`
+- Buttons: warm cream pill with gold double border
+- Fonts: Press Start 2P (H1/labels), Space Mono (body), VT323 (terminal)
+- Scroll animations: section-fade-up, window-cascade, monitor-flicker, scanline-sweep
 
 ## Architecture
 
 ### Simulation Engine (`src/simulation/`)
-- `types.ts` - Single source of truth (NodeType, NodeHealth, Metrics, ParticleType)
-- `stages.ts` - 6 stage configurations + fixModes. Each stage can have 1–3 nested fix modes for progressive learning
-- `engine.ts` - `useSimulation` hook: metrics computation, particle spawning per engineId (stage or fixMode)
-
-**Design:** Functional, immutable. No state management libraries. Metrics computed deterministically from tick number using sigmoid curves for smooth ramps.
+- `types.ts` - Single source of truth (NodeType, NodeHealth, Metrics, ParticleType, moduleType union)
+- `stages.ts` - 12 stage configurations + fixModes
+- `engine.ts` - `useSimulation` hook: metrics computation, particle spawning (stages 1-6 only)
 
 ### Diagram System (`src/components/diagram/`)
-- `SystemDiagram.tsx` - SVG canvas wrapper, health state computation, particle rendering order
-- `ComponentBox.tsx` - Node boxes (180×100px) with SVG icons, health borders, status badges
-- `FlowConnection.tsx` - Animated edges (cubic bezier curves with dashed animated stroke)
-- `RequestParticle.tsx` - Glowing particles, linear waypoint interpolation, type-specific radii
+- `SystemDiagram.tsx` - SVG canvas, health computation, particle rendering (cream bg)
+- `ComponentBox.tsx` - Node boxes with SVG icons, health borders, status badges
+- `FlowConnection.tsx` - Animated edges (cubic bezier, sage-toned strokes)
+- `RequestParticle.tsx` - Particles with linear waypoint interpolation
 
 ### Page Components (`src/components/`)
-- `LandingPage.tsx` - Hero boot animation + 3-column stage selector grid; ESC from simulator returns here
-- `InfoCard.tsx` - Left sidebar content: TECHNICAL TERM, WHEN DOES THIS HAPPEN, WHAT IS THIS CONDITION, HOW TO RESOLVE; fix progression buttons (problem → fix 1 → fix 2 → OPTIMIZED)
+- `LandingPage.tsx` - 7-section landing page: hero, value prop, personas, folder tree, FAQ, CTA, footer. Scroll-triggered animations via shared IntersectionObserver.
+- `InfoCard.tsx` - Left sidebar: info cards + fix mode buttons (toggle mode for transformer)
 
-## 9-Stage Learning Progression
+### Module Pattern (`src/modules/`)
+Each interactive module (stages 7-12) follows:
+```
+src/modules/[name]/
+├── [name].types.ts        # State interfaces, action types
+├── [Name]Engine.ts        # Pure functions: createInitialState(), operations → new state
+└── [Name]Simulation.tsx   # useReducer + SVG rendering + controls
+```
 
-**System Design Stages (1-6):** Each has Base Problem → Fix modes. Total 14 system design steps.
+## 12-Stage Learning Progression
+
+**System Design (1-6):** Tick-based, particle flow, live metrics HUD.
 
 | Stage | Problem | Fixes |
 |-------|---------|-------|
 | **1** | Baseline: 1 server 15% CPU | — |
 | **2** | Stateful Auth: CPU 75% | Stateless refactor (45%) |
-| **3** | API Gateway: 20% rejected | Rate limiter + validation (100% pass) |
+| **3** | API Gateway: 20% rejected | Rate limiter + validation |
 | **4** | Load Balancer: Server down | Hotspot vs balanced health checks |
-| **5** | DB + Cache: Pool 95%, latency 250ms | Cache layer (80% hit, 35ms) → cluster |
-| **6** | Data Replication: 15K RPS, pool 100% | Read replicas (18% pool, 28ms) |
+| **5** | DB + Cache: Pool 95%, 250ms | Cache layer (80% hit, 35ms) → cluster |
+| **6** | Data Replication: 15K RPS | Read replicas (18% pool, 28ms) |
 
-**Database Internals Modules (7-9):** Interactive, non-tick-based. Each stage = problem + fix modes.
+**Database Internals (7-9):** Interactive, user-driven.
 
-| Stage | Module | Problem | Fixes |
-|-------|--------|---------|-------|
-| **7** | Redis KV | Volatile (no persistence) | RDB snapshots \| AOF full log |
-| **8** | Cassandra LSM | Memtable→L0 only | Bloom filters \| Compaction |
-| **9** | PostgreSQL B+ | Tree structure basics | Range scan efficiency |
+| Stage | Module | Fixes |
+|-------|--------|-------|
+| **7** | Redis KV | RDB snapshots \| AOF full log |
+| **8** | Cassandra LSM | Bloom filters \| Compaction |
+| **9** | PostgreSQL B+ | Range scan efficiency |
+
+**AI/ML (10):** Interactive, fixed input, animated forward pass.
+
+| Stage | Module | Fixes |
+|-------|--------|-------|
+| **10** | LLM Transformer | Attention deep dive \| FFN deep dive \| Prediction/temperature |
+
+**Networking (11):** Interactive, state machine driven.
+
+| Stage | Module | Fixes |
+|-------|--------|-------|
+| **11** | TCP Handshake | SYN timeout \| RST \| Connection close & TIME-WAIT |
+
+**Message Brokers (12):** Progressive reveal — each fix mode adds one layer of complexity.
+
+| Stage | Module | Progressive Modes |
+|-------|--------|-------------------|
+| **12** | Kafka | Base: simple log → Partitions: hash routing → Replication: ISR/acks → Failure: leader election → Consumer groups: rebalancing |
 
 ## File Structure
 
 ```
 src/
-├── App.tsx                      # Main router: stages 1-9, conditional moduleType rendering
+├── App.tsx                      # Router: moduleType → component
 ├── simulation/
-│   ├── types.ts                 # Stage, FixMode (has moduleType?: 'btree'|'lsm'|'redis-kv')
-│   ├── stages.ts                # 9 stages (6 system design + 3 database modules)
-│   └── engine.ts                # useSimulation for stages 1-6 only
+│   ├── types.ts                 # moduleType union: btree|lsm|redis-kv|transformer|tcp|kafka
+│   ├── stages.ts                # 12 stages across 6 tracks
+│   └── engine.ts                # useSimulation for stages 1-6
 ├── components/
-│   ├── LandingPage.tsx
-│   ├── InfoCard.tsx
-│   └── diagram/ (stages 1-6 only)
-│       ├── SystemDiagram.tsx
-│       ├── ComponentBox.tsx
-│       ├── FlowConnection.tsx
-│       └── RequestParticle.tsx
-└── modules/ (stages 7-9 interactive)
-    ├── redis/
-    │   ├── redis.types.ts       # RedisState, PersistenceMode, animation steps
-    │   ├── RedisEngine.ts        # Hash table, LRU eviction, persistence logic
-    │   └── RedisSimulation.tsx   # SVG renderer + useReducer UI
-    ├── lsm/
-    │   ├── lsm.types.ts          # Memtable, SSTable, BloomFilter, LSMState
-    │   ├── LSMEngine.ts          # Write path, Bloom check, compaction
-    │   └── LSMSimulation.tsx      # WAL, Memtable, L0/L1 visualization
-    └── btree/
-        ├── btree.types.ts        # BTreePage, BTreeState
-        ├── BTreeEngine.ts        # Insert with splits, search, range scan
-        └── BTreeSimulation.tsx   # Tree layout + rendering (2-pass positioning)
+│   ├── LandingPage.tsx          # 7-section landing + 6-track folder tree
+│   ├── InfoCard.tsx             # Sidebar content + retro pill fix buttons
+│   └── diagram/                 # Stages 1-6 SVG system
+└── modules/
+    ├── redis/                   # Stage 7: hash table, LRU, persistence
+    ├── lsm/                     # Stage 8: WAL, Memtable, SSTables, Bloom
+    ├── btree/                   # Stage 9: B+ tree, splits, range scans
+    ├── transformer/             # Stage 10: GPT decoder, attention, FFN, softmax
+    ├── tcp/                     # Stage 11: 3-way handshake, SYN/ACK/RST/FIN
+    └── kafka/                   # Stage 12: progressive reveal (log→partitions→brokers→failure→consumers)
 ```
 
 ## Development Guidelines
 
-### System Design Stages (1-6)
+### Progressive Reveal Pattern (Kafka model)
+For complex systems, use progressive reveal instead of showing everything at once:
+1. Base mode = simplest possible version (e.g., 1 producer → 1 log → 1 consumer)
+2. Each fix mode adds exactly ONE new concept (partitions, then replication, then failure, then scaling)
+3. Controls only show what's relevant to current mode
+4. Sidebar text only references visible components — never mentions concepts not yet shown
+5. `createInitialState(mode)` creates appropriate state per mode
 
-**Add new system design stage:**
-1. Create stage object in `stages.ts` with: `id`, `title`, `nodes`, `edges`, `viewBox`, `insight`, `fixModes?`
-2. Add `computeMetrics()` case in `engine.ts` for stage's `engineId`
-3. Add `getWaypoints()` case for particle paths
-4. Add `getNodeHealth()` logic in `SystemDiagram.tsx` if needed
+### Adding a New Module (stages 7+ pattern)
+1. Create `src/modules/mymodule/` with 3 files (types, engine, simulation)
+2. Engine: pure functions, `createInitialState()` + operation functions
+3. Simulation: `useReducer`, SVG rendering, controls panel
+4. Stage in `stages.ts` with `moduleType: 'mymodule'`
+5. Import + conditional in `App.tsx`
+6. `getTracks()` in LandingPage.tsx auto-groups by moduleType
 
-### Database Modules (7-9)
+### Landing Page Sections
+1. Hero (boot animation)
+2. Value Prop (See It / Break It / Fix It — window cascade)
+3. Who Is This For (persona cards — stagger fade)
+4. Simulation Selector (folder tree — loading text + window spawn)
+5. FAQ (accordion — monitor flicker)
+6. Final CTA (scanline sweep)
+7. Footer (simple fade-up)
 
-**Add new database module (Redis pattern):**
-1. Create `src/modules/mydb/` directory with 3 files:
-   - `mydb.types.ts` — State interfaces, action types
-   - `MydbEngine.ts` — Pure functions: `createInitialState()`, `dbOperation(state, args)` → new state
-   - `MydbSimulation.tsx` — Component with `useReducer(reducer, initialState)`, SVG rendering
-2. Create stage in `stages.ts` with `moduleType: 'mydb'`
-3. Add import + conditional in `App.tsx`: `currentStage.moduleType === 'mydb'` → render component
-4. Stage can have 1-2 fixModes; UI auto-switches based on `fixModeIndex` prop
-
-**Key differences from system design:**
-- No `useSimulation` hook (custom logic via engine functions)
-- No particle/metric HUD (each module custom visualization)
-- `useReducer` for state management (not hooks)
-- Stages use `nodes: []`, `edges: []` (layout handled by module)
-- Interactive (user-driven actions) vs tick-based (metrics computed)
-
-### Adding New Node Types
-1. Add to `NodeType` union in `types.ts`
-2. Add typeConfig entry in `ComponentBox.tsx` (color, SVG icon)
-3. Update `getStatusText()` to show relevant metric for type
-4. Add health-specific visual rendering if needed
-
-### Particle System
-- **Spawn rate:** `Math.floor((metrics.rps / 1000) / 16 * 0.8)` per tick
-- **Duration:** 1200ms for full paths, 400ms for health-check pings
-- **Types & colors:** green (normal request), red (rejected/error), orange (rate-limited/cache-miss), cyan (health-check ping)
-- **Stage-specific logic:**
-  - **stage-loadbalancer / stage-lb-hotspot / stage-lb-balanced:** Cyan health-check particles from LB to servers
-  - **stage-api-gw / stage-agw-fix:** Red rejected particles stop at API gateway (rate limiting)
-  - **stage-cache-layer / stage-9 / stage-cache-cluster:** Orange cache-miss particles take full DB path; green cache-hit particles stop at cache layer
+All scroll-triggered via shared IntersectionObserver + CSS keyframes. `prefers-reduced-motion` supported.
 
 ### Styling Principles
-- Dark theme (Tailwind gray-950 bg): reduces eye strain during learning
-- Color coding: green=healthy, amber=stressed, red=critical/overloaded, cyan=informational
-- Node health pulse rings: `stressed` (subtle), `overloaded` (large)
+- Retro clean palette: sage bg, cream surfaces, coral accent
+- Buttons: `.retro-btn` (cream pill, gold double border), `.retro-btn--accent` (coral)
+- Windows: `.retro-window` with `.window-titlebar` (retro blue)
+- Color coding: green=healthy, amber=stressed, red=critical, coral=accent
+- Simulation SVGs use cream backgrounds (`#F0F0E8`) — NOT dark theme
 
 ## Development & Deployment
 
-### Local Development
 ```bash
 make install   # Install deps
-make dev       # Start Vite dev server (localhost:5173)
+make dev       # Vite dev server (localhost:5173)
 make build     # Production build → dist/
 ```
 
-### Docker Deployment
+### Docker
 ```bash
-make docker-build  # Multi-stage build: Node → Nginx
-make docker-run    # Serve via Nginx on :3000
+make docker-build  # Multi-stage: Node → Nginx
+make docker-run    # Nginx on :3000
 ```
-
-### Vercel / Static Hosting
-- `dist/` output is fully static (no SSR)
-- Vite automatically chunks and cache-busts
-- Deploy `dist/` folder to any static host
 
 ## Dos & Don'ts
 
 ### Dos
-- Keep stages as pure configuration (src/simulation/stages.ts)
+- Keep stages as pure configuration (stages.ts)
 - Use SVG waypoints for particles (no CSS offset-path)
 - Compute metrics deterministically from tick number
-- Pass stageId context down for stage-specific behavior
-- Use sigmoid curves (180→360 ticks) for smooth ramps
+- Follow retro clean palette (cream/sage/coral)
+- Use `.retro-btn` for all interactive buttons
 
 ### Don'ts
 - No backend API (fully client-side)
-- No global state (useState only, single source of truth per hook)
-- No class-based simulation (functional hooks)
+- No global state (useState/useReducer only)
+- No dark theme (retro clean palette throughout)
 - No CSS animations for particle motion (use SVG interpolation)
-- No mixing SVG and canvas rendering
+- No Framer Motion for landing page (CSS keyframes + IntersectionObserver)

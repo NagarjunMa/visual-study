@@ -136,8 +136,8 @@ export function BTreeSimulation({}: BTreeSimulationProps) {
           width={boxWidth}
           height="50"
           rx="3"
-          fill={page.isLeaf ? '#E8E6D8' : '#E8E6D8'}
-          stroke={page.isLeaf ? '#0ea5e9' : '#f59e0b'}
+          fill={page.isLeaf ? '#D0CEBA' : '#D0CEBA'}
+          stroke={page.isLeaf ? '#0284c7' : '#d97706'}
           strokeWidth="2"
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -149,7 +149,7 @@ export function BTreeSimulation({}: BTreeSimulationProps) {
             key={`key-${i}`}
             x={pos.x - boxWidth / 2 + i * KEY_SLOT + KEY_SLOT / 2}
             y={pos.y + 32}
-            fill={page.isLeaf ? '#38bdf8' : '#fcd34d'}
+            fill={page.isLeaf ? '#38bdf8' : '#d97706'}
             fontSize="14"
             fontWeight="bold"
             fontFamily="monospace"
@@ -201,7 +201,7 @@ export function BTreeSimulation({}: BTreeSimulationProps) {
             y1={pos.y + 25}
             x2={positions[page.rightLink].x - boxWidth / 2}
             y2={positions[page.rightLink].y + 25}
-            stroke="#22c55e"
+            stroke="#16a34a"
             strokeWidth="2"
             markerEnd="url(#arrowgreen)"
           />
@@ -219,13 +219,13 @@ export function BTreeSimulation({}: BTreeSimulationProps) {
         <svg viewBox="0 0 1100 560" preserveAspectRatio="xMidYMid meet" className="max-w-full max-h-full">
           <defs>
             <marker id="arrowgreen" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
-              <path d="M0,0 L0,6 L9,3 z" fill="#22c55e" />
+              <path d="M0,0 L0,6 L9,3 z" fill="#16a34a" />
             </marker>
           </defs>
           <rect width="1100" height="560" fill="#F0F0E8" />
 
           {/* Tree title */}
-          <text x="50" y="30" fill="#22c55e" fontSize="14" fontWeight="bold" fontFamily="monospace">
+          <text x="50" y="30" fill="#16a34a" fontSize="14" fontWeight="bold" fontFamily="monospace">
             B+ Tree (Order 3, Height {state.height})
           </text>
 
@@ -238,7 +238,7 @@ export function BTreeSimulation({}: BTreeSimulationProps) {
               {state.lastOp}
             </text>
             {message && (
-              <text x="50" y="540" fill="#60a5fa" fontSize="11" fontFamily="monospace">
+              <text x="50" y="540" fill="#2563eb" fontSize="11" fontFamily="monospace">
                 {message}
               </text>
             )}

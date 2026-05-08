@@ -87,10 +87,10 @@ export function LSMSimulation({}: LSMSimulationProps) {
 
           {/* WAL Panel (left) */}
           <g>
-            <text x="20" y="25" fill="#22c55e" fontSize="13" fontWeight="bold" fontFamily="monospace">
+            <text x="20" y="25" fill="#16a34a" fontSize="13" fontWeight="bold" fontFamily="monospace">
               WAL
             </text>
-            <rect x="12" y="35" width="140" height="520" rx="4" fill="#E8E6D8" stroke="#4b5563" strokeWidth="1" />
+            <rect x="12" y="35" width="140" height="520" rx="4" fill="#D0CEBA" stroke="#4b5563" strokeWidth="1" />
             {state.wal.slice(-10).map((entry, i) => (
               <text
                 key={i}
@@ -107,17 +107,17 @@ export function LSMSimulation({}: LSMSimulationProps) {
 
           {/* Memtable Panel (center) */}
           <g>
-            <text x="170" y="25" fill="#22c55e" fontSize="13" fontWeight="bold" fontFamily="monospace">
+            <text x="170" y="25" fill="#16a34a" fontSize="13" fontWeight="bold" fontFamily="monospace">
               MEMTABLE
             </text>
             {/* Capacity bar */}
-            <rect x="170" y="35" width="200" height="20" rx="3" fill="#E8E6D8" stroke="#4b5563" strokeWidth="1" />
+            <rect x="170" y="35" width="200" height="20" rx="3" fill="#D0CEBA" stroke="#4b5563" strokeWidth="1" />
             <motion.rect
               x="173"
               y="38"
               height="14"
               rx="2"
-              fill={memtablePct > 80 ? '#ef4444' : memtablePct > 50 ? '#f59e0b' : '#22c55e'}
+              fill={memtablePct > 80 ? '#ef4444' : memtablePct > 50 ? '#d97706' : '#16a34a'}
               animate={{ width: Math.min((memtableUsed / state.memtableCapacity) * 194, 194) }}
               transition={{ duration: 0.3 }}
             />
@@ -134,7 +134,7 @@ export function LSMSimulation({}: LSMSimulationProps) {
                   width="200"
                   height="24"
                   rx="2"
-                  fill="#E8E6D8"
+                  fill="#D0CEBA"
                   stroke={entry.tombstone ? '#dc2626' : '#0ea5e9'}
                   strokeWidth="1"
                 />
@@ -154,12 +154,12 @@ export function LSMSimulation({}: LSMSimulationProps) {
 
           {/* L0 SSTables */}
           <g>
-            <text x="170" y="280" fill="#22c55e" fontSize="12" fontWeight="bold" fontFamily="monospace">
+            <text x="170" y="280" fill="#16a34a" fontSize="12" fontWeight="bold" fontFamily="monospace">
               Level 0 ({state.sstables[0].length})
             </text>
             {state.sstables[0].map((sstable, idx) => (
               <g key={`l0-${idx}`}>
-                <rect x={170 + idx * 140} y="300" width="130" height="100" rx="3" fill="#E8E6D8" stroke="#0ea5e9" strokeWidth="1" />
+                <rect x={170 + idx * 140} y="300" width="130" height="100" rx="3" fill="#D0CEBA" stroke="#0ea5e9" strokeWidth="1" />
                 <text x={180 + idx * 140} y="320" fill="#38bdf8" fontSize="10" fontWeight="bold" fontFamily="monospace">
                   {sstable.id}
                 </text>
@@ -178,7 +178,7 @@ export function LSMSimulation({}: LSMSimulationProps) {
                     width="6"
                     height="6"
                     rx="1"
-                    fill={bit ? '#22c55e' : '#4b5563'}
+                    fill={bit ? '#16a34a' : '#4b5563'}
                   />
                 ))}
               </g>
@@ -187,13 +187,13 @@ export function LSMSimulation({}: LSMSimulationProps) {
 
           {/* L1 SSTables */}
           <g>
-            <text x="170" y="435" fill="#22c55e" fontSize="12" fontWeight="bold" fontFamily="monospace">
+            <text x="170" y="435" fill="#16a34a" fontSize="12" fontWeight="bold" fontFamily="monospace">
               Level 1 ({state.sstables[1]?.length || 0})
             </text>
             {state.sstables[1]?.map((sstable, idx) => (
               <g key={`l1-${idx}`}>
-                <rect x={170 + idx * 160} y="455" width="150" height="80" rx="3" fill="#E8E6D8" stroke="#f59e0b" strokeWidth="1" />
-                <text x={180 + idx * 160} y="475" fill="#fcd34d" fontSize="10" fontWeight="bold" fontFamily="monospace">
+                <rect x={170 + idx * 160} y="455" width="150" height="80" rx="3" fill="#D0CEBA" stroke="#d97706" strokeWidth="1" />
+                <text x={180 + idx * 160} y="475" fill="#d97706" fontSize="10" fontWeight="bold" fontFamily="monospace">
                   {sstable.id}
                 </text>
                 <text x={180 + idx * 160} y="492" fill="#7A7A6E" fontSize="8" fontFamily="monospace">
@@ -207,7 +207,7 @@ export function LSMSimulation({}: LSMSimulationProps) {
                     width="6"
                     height="6"
                     rx="1"
-                    fill={bit ? '#22c55e' : '#4b5563'}
+                    fill={bit ? '#16a34a' : '#4b5563'}
                   />
                 ))}
               </g>

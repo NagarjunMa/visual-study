@@ -608,6 +608,13 @@ body {
   z-index: 10;
 }
 
+/* Override retro-window base opacity when inside revealed parents */
+.scroll-reveal.revealed .retro-window,
+.flicker-reveal.revealed .retro-window {
+  opacity: 1;
+  transform: none;
+}
+
 /* Loading text that shows before window appears */
 .loading-text {
   opacity: 0;

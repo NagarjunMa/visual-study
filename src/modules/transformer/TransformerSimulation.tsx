@@ -65,7 +65,7 @@ function reducer(state: TransformerState, action: TransformerAction): Transforme
 
 // ─── Colour helpers ───────────────────────────────────────────────────────────
 function valueColor(v: number): string {
-  if (v > 0.05) return '#22c55e'
+  if (v > 0.05) return '#047857'
   if (v < -0.05) return '#ef4444'
   return '#64748b'
 }
@@ -154,13 +154,13 @@ function BasePipeline({
       <rect width="1200" height="600" fill="#F0F0E8" />
 
       {/* Title */}
-      <text x="16" y="22" fill="#22c55e" fontSize="13" fontWeight="bold" fontFamily="monospace">
+      <text x="16" y="22" fill="#047857" fontSize="13" fontWeight="bold" fontFamily="monospace">
         GPT Decoder — {PHASE_LABELS[phase]}
       </text>
 
       {/* ── Zone: INPUT ─────────────────────────────────────── */}
       <rect x="10" y="35" width="110" height="510" rx="6" {...zoneProps('tokenize')} />
-      <text x="65" y="55" fill="#a78bfa" fontSize="10" fontWeight="bold" fontFamily="monospace" textAnchor="middle">INPUT</text>
+      <text x="65" y="55" fill="#7c3aed" fontSize="10" fontWeight="bold" fontFamily="monospace" textAnchor="middle">INPUT</text>
       {state.inputText ? (
         state.inputText.split(/\s+/).slice(0, 8).map((w, i) => (
           <text key={i} x="65" y={75 + i * 20} fill="#2A2A28" fontSize="9" fontFamily="monospace" textAnchor="middle">{w}</text>
@@ -178,8 +178,8 @@ function BasePipeline({
       {state.embeddings.map((emb, i) => (
         <g key={i}>
           {/* Token chip */}
-          <rect x="148" y={68 + i * 60} width="44" height="16" rx="3" fill="#3A3A6E" stroke="#a78bfa" strokeWidth="1" />
-          <text x="170" y={79 + i * 60} fill="#c4b5fd" fontSize="7" fontFamily="monospace" textAnchor="middle">
+          <rect x="148" y={68 + i * 60} width="44" height="16" rx="3" fill="#3A3A6E" stroke="#7c3aed" strokeWidth="1" />
+          <text x="170" y={79 + i * 60} fill="#8b5cf6" fontSize="7" fontFamily="monospace" textAnchor="middle">
             [{emb.tokenId}]{state.tokens[i]?.text.slice(0, 4)}
           </text>
           {/* Embedding bars */}
@@ -199,15 +199,15 @@ function BasePipeline({
       <text x="430" y="55" fill="#f59e0b" fontSize="10" fontWeight="bold" fontFamily="monospace" textAnchor="middle">LAYER 1</text>
 
       {/* MHSA block */}
-      <rect x="342" y="62" width="176" height="70" rx="4" fill="#E8E6D8" stroke={phase === 'mhsa-L1' ? '#fbbf24' : '#B0B09A'} strokeWidth={phase === 'mhsa-L1' ? 2 : 1} />
-      <text x="430" y="80" fill="#fcd34d" fontSize="9" fontWeight="bold" fontFamily="monospace" textAnchor="middle">Multi-Head Self-Attention</text>
+      <rect x="342" y="62" width="176" height="70" rx="4" fill="#D0CEBA" stroke={phase === 'mhsa-L1' ? '#fbbf24' : '#B0B09A'} strokeWidth={phase === 'mhsa-L1' ? 2 : 1} />
+      <text x="430" y="80" fill="#d97706" fontSize="9" fontWeight="bold" fontFamily="monospace" textAnchor="middle">Multi-Head Self-Attention</text>
       <text x="430" y="94" fill="#7A7A6E" fontSize="8" fontFamily="monospace" textAnchor="middle">Q×Kᵀ/√d → softmax → ×V</text>
       <text x="430" y="108" fill="#7A7A6E" fontSize="8" fontFamily="monospace" textAnchor="middle">{NUM_HEADS} heads · head_dim={DIM / NUM_HEADS}</text>
       <text x="430" y="122" fill="#7A7A6E" fontSize="7" fontFamily="monospace" textAnchor="middle">causal mask + residual</text>
 
       {/* FFN block */}
-      <rect x="342" y="140" width="176" height="70" rx="4" fill="#E8E6D8" stroke={phase === 'ffn-L1' ? '#fbbf24' : '#B0B09A'} strokeWidth={phase === 'ffn-L1' ? 2 : 1} />
-      <text x="430" y="158" fill="#fcd34d" fontSize="9" fontWeight="bold" fontFamily="monospace" textAnchor="middle">Feed-Forward Network</text>
+      <rect x="342" y="140" width="176" height="70" rx="4" fill="#D0CEBA" stroke={phase === 'ffn-L1' ? '#fbbf24' : '#B0B09A'} strokeWidth={phase === 'ffn-L1' ? 2 : 1} />
+      <text x="430" y="158" fill="#d97706" fontSize="9" fontWeight="bold" fontFamily="monospace" textAnchor="middle">Feed-Forward Network</text>
       <text x="430" y="172" fill="#7A7A6E" fontSize="8" fontFamily="monospace" textAnchor="middle">GELU(W₁·x+b₁) → W₂·h+b₂</text>
       <text x="430" y="186" fill="#7A7A6E" fontSize="8" fontFamily="monospace" textAnchor="middle">{DIM}→{FFN_DIM}→{DIM} (4× expansion)</text>
       <text x="430" y="200" fill="#7A7A6E" fontSize="7" fontFamily="monospace" textAnchor="middle">+ residual connection</text>
@@ -221,13 +221,13 @@ function BasePipeline({
       <rect x="330" y="285" width="200" height="260" rx="6" {...zoneProps('layer2')} />
       <text x="430" y="305" fill="#f59e0b" fontSize="10" fontWeight="bold" fontFamily="monospace" textAnchor="middle">LAYER 2</text>
 
-      <rect x="342" y="312" width="176" height="70" rx="4" fill="#E8E6D8" stroke={phase === 'mhsa-L2' ? '#fbbf24' : '#B0B09A'} strokeWidth={phase === 'mhsa-L2' ? 2 : 1} />
-      <text x="430" y="330" fill="#fcd34d" fontSize="9" fontWeight="bold" fontFamily="monospace" textAnchor="middle">Multi-Head Self-Attention</text>
+      <rect x="342" y="312" width="176" height="70" rx="4" fill="#D0CEBA" stroke={phase === 'mhsa-L2' ? '#fbbf24' : '#B0B09A'} strokeWidth={phase === 'mhsa-L2' ? 2 : 1} />
+      <text x="430" y="330" fill="#d97706" fontSize="9" fontWeight="bold" fontFamily="monospace" textAnchor="middle">Multi-Head Self-Attention</text>
       <text x="430" y="344" fill="#7A7A6E" fontSize="8" fontFamily="monospace" textAnchor="middle">Q×Kᵀ/√d → softmax → ×V</text>
       <text x="430" y="358" fill="#7A7A6E" fontSize="7" fontFamily="monospace" textAnchor="middle">causal mask + residual</text>
 
-      <rect x="342" y="390" width="176" height="70" rx="4" fill="#E8E6D8" stroke={phase === 'ffn-L2' ? '#fbbf24' : '#B0B09A'} strokeWidth={phase === 'ffn-L2' ? 2 : 1} />
-      <text x="430" y="408" fill="#fcd34d" fontSize="9" fontWeight="bold" fontFamily="monospace" textAnchor="middle">Feed-Forward Network</text>
+      <rect x="342" y="390" width="176" height="70" rx="4" fill="#D0CEBA" stroke={phase === 'ffn-L2' ? '#fbbf24' : '#B0B09A'} strokeWidth={phase === 'ffn-L2' ? 2 : 1} />
+      <text x="430" y="408" fill="#d97706" fontSize="9" fontWeight="bold" fontFamily="monospace" textAnchor="middle">Feed-Forward Network</text>
       <text x="430" y="422" fill="#7A7A6E" fontSize="8" fontFamily="monospace" textAnchor="middle">GELU(W₁·x+b₁) → W₂·h+b₂</text>
       <text x="430" y="436" fill="#7A7A6E" fontSize="7" fontFamily="monospace" textAnchor="middle">+ residual connection</text>
 
@@ -238,7 +238,7 @@ function BasePipeline({
       {/* Final hidden */}
       {state.finalHidden.length > 0 && (
         <g>
-          <text x="430" y="510" fill="#60a5fa" fontSize="8" fontFamily="monospace" textAnchor="middle">last token h[{DIM}]:</text>
+          <text x="430" y="510" fill="#2563eb" fontSize="8" fontFamily="monospace" textAnchor="middle">last token h[{DIM}]:</text>
           {embeddingBars(state.finalHidden, 340, 516, 8, 20)}
         </g>
       )}
@@ -270,14 +270,14 @@ function BasePipeline({
 
       {/* ── Zone: SOFTMAX ────────────────────────────────────── */}
       <rect x="700" y="35" width="130" height="510" rx="6" {...zoneProps('softmax')} />
-      <text x="765" y="55" fill="#10b981" fontSize="10" fontWeight="bold" fontFamily="monospace" textAnchor="middle">SOFTMAX</text>
+      <text x="765" y="55" fill="#047857" fontSize="10" fontWeight="bold" fontFamily="monospace" textAnchor="middle">SOFTMAX</text>
       <text x="765" y="70" fill="#7A7A6E" fontSize="8" fontFamily="monospace" textAnchor="middle">exp(l/τ)/Σexp · τ={state.temperature.toFixed(1)}</text>
       {state.probabilities.slice(0, 20).map((p, i) => {
         const barW = Math.min(p * 400, 90)
         return (
           <g key={i}>
             <text x="708" y={90 + i * 19} fill="#7A7A6E" fontSize="6.5" fontFamily="monospace">{VOCABULARY[i].slice(0, 5)}</text>
-            <rect x="737" y={81 + i * 19} width={barW} height="10" rx="1" fill="#10b981" opacity={0.7} />
+            <rect x="737" y={81 + i * 19} width={barW} height="10" rx="1" fill="#047857" opacity={0.7} />
             <text x="833" y={90 + i * 19} fill="#7A7A6E" fontSize="6" fontFamily="monospace">
               {(p * 100).toFixed(1)}%
             </text>
@@ -297,7 +297,7 @@ function BasePipeline({
           <rect
             x="862" y={72 + rank * 82}
             width="316" height="72" rx="6"
-            fill="#E8E6D8"
+            fill="#D0CEBA"
             stroke={rank === 0 ? '#f59e0b' : '#B0B09A'}
             strokeWidth={rank === 0 ? 2 : 1}
           />
@@ -346,7 +346,7 @@ function AttentionDeepdive({ state }: { state: TransformerState }) {
   return (
     <svg viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid meet" className="max-w-full max-h-full">
       <rect width="1200" height="600" fill="#F0F0E8" />
-      <text x="16" y="22" fill="#a78bfa" fontSize="13" fontWeight="bold" fontFamily="monospace">
+      <text x="16" y="22" fill="#7c3aed" fontSize="13" fontWeight="bold" fontFamily="monospace">
         Attention Deep Dive — Layer 1
       </text>
 
@@ -355,7 +355,7 @@ function AttentionDeepdive({ state }: { state: TransformerState }) {
         <g key={h} style={{ cursor: 'pointer' }} onClick={() => setHeadIdx(h)}>
           <rect x={16 + h * 80} y="32" width="70" height="22" rx="4"
             fill={headIdx === h ? '#7c3aed' : '#E8E6D8'}
-            stroke={headIdx === h ? '#a78bfa' : '#B0B09A'} strokeWidth="1" />
+            stroke={headIdx === h ? '#7c3aed' : '#B0B09A'} strokeWidth="1" />
           <text x={51 + h * 80} y="47" fill={headIdx === h ? '#e9d5ff' : '#7A7A6E'}
             fontSize="10" fontFamily="monospace" textAnchor="middle" fontWeight="bold">
             HEAD {h}
@@ -420,22 +420,22 @@ function AttentionDeepdive({ state }: { state: TransformerState }) {
             <g key={i}>
               <text x="500" y={100 + i * 65} fill="#2A2A28" fontSize="8" fontFamily="monospace">{t.text.slice(0, 6)}</text>
               {/* Q */}
-              <text x="500" y={114 + i * 65} fill="#a78bfa" fontSize="7" fontFamily="monospace">Q</text>
+              <text x="500" y={114 + i * 65} fill="#7c3aed" fontSize="7" fontFamily="monospace">Q</text>
               {head.Q[i]?.map((v, d) => {
                 const h = barHeight(v, 12)
-                return <rect key={d} x={516 + d * 9} y={114 + i * 65 - h} width="7" height={h} fill="#a78bfa" opacity={0.8} />
+                return <rect key={d} x={516 + d * 9} y={114 + i * 65 - h} width="7" height={h} fill="#7c3aed" opacity={0.8} />
               })}
               {/* K */}
-              <text x="500" y={130 + i * 65} fill="#38bdf8" fontSize="7" fontFamily="monospace">K</text>
+              <text x="500" y={130 + i * 65} fill="#0284c7" fontSize="7" fontFamily="monospace">K</text>
               {head.K[i]?.map((v, d) => {
                 const h = barHeight(v, 12)
-                return <rect key={d} x={516 + d * 9} y={130 + i * 65 - h} width="7" height={h} fill="#38bdf8" opacity={0.8} />
+                return <rect key={d} x={516 + d * 9} y={130 + i * 65 - h} width="7" height={h} fill="#0284c7" opacity={0.8} />
               })}
               {/* V */}
-              <text x="500" y={146 + i * 65} fill="#4ade80" fontSize="7" fontFamily="monospace">V</text>
+              <text x="500" y={146 + i * 65} fill="#16a34a" fontSize="7" fontFamily="monospace">V</text>
               {head.V[i]?.map((v, d) => {
                 const h = barHeight(v, 12)
-                return <rect key={d} x={516 + d * 9} y={146 + i * 65 - h} width="7" height={h} fill="#4ade80" opacity={0.8} />
+                return <rect key={d} x={516 + d * 9} y={146 + i * 65 - h} width="7" height={h} fill="#16a34a" opacity={0.8} />
               })}
             </g>
           ))}
@@ -446,14 +446,14 @@ function AttentionDeepdive({ state }: { state: TransformerState }) {
       <g>
         <text x="820" y="80" fill="#7A7A6E" fontSize="10" fontFamily="monospace">How MHSA works</text>
         {[
-          { label: '1. Scores', formula: 'S = Q × Kᵀ / √d_k', color: '#fcd34d' },
+          { label: '1. Scores', formula: 'S = Q × Kᵀ / √d_k', color: '#d97706' },
           { label: '2. Mask', formula: 'S[i,j]=−∞ if j>i', color: '#f87171' },
           { label: '3. Softmax', formula: 'A = softmax(S)', color: '#34d399' },
-          { label: '4. Context', formula: 'C = A × V', color: '#60a5fa' },
+          { label: '4. Context', formula: 'C = A × V', color: '#2563eb' },
         ].map((step, idx) => (
           <g key={idx}>
             <rect x="820" y={100 + idx * 100} width="360" height="80" rx="6"
-              fill="#E8E6D8" stroke="#B0B09A" strokeWidth="1" />
+              fill="#D0CEBA" stroke="#B0B09A" strokeWidth="1" />
             <text x="840" y={125 + idx * 100} fill={step.color} fontSize="11" fontWeight="bold" fontFamily="monospace">{step.label}</text>
             <text x="840" y={150 + idx * 100} fill="#7A7A6E" fontSize="10" fontFamily="monospace">{step.formula}</text>
           </g>
@@ -489,7 +489,7 @@ function FFNDeepdive({ state }: { state: TransformerState }) {
   return (
     <svg viewBox="0 0 1200 600" preserveAspectRatio="xMidYMid meet" className="max-w-full max-h-full">
       <rect width="1200" height="600" fill="#F0F0E8" />
-      <text x="16" y="22" fill="#4ade80" fontSize="13" fontWeight="bold" fontFamily="monospace">
+      <text x="16" y="22" fill="#16a34a" fontSize="13" fontWeight="bold" fontFamily="monospace">
         FFN Deep Dive — Layer 1 · {DIM}→{FFN_DIM}→{DIM} (GELU)
       </text>
 
@@ -501,7 +501,7 @@ function FFNDeepdive({ state }: { state: TransformerState }) {
         return (
           <g key={i}>
             <circle cx="40" cy={90 + i * 55} r="18"
-              fill="#E8E6D8" stroke={valueColor(v)} strokeWidth="2" />
+              fill="#D0CEBA" stroke={valueColor(v)} strokeWidth="2" />
             <text x="40" y={95 + i * 55} fill={valueColor(v)} fontSize="7" fontFamily="monospace" textAnchor="middle">
               {v.toFixed(2)}
             </text>
@@ -514,17 +514,17 @@ function FFNDeepdive({ state }: { state: TransformerState }) {
 
       {/* ── W1 label ────────────────────────────────────────────── */}
       <text x="110" y="55" fill="#7A7A6E" fontSize="9" fontFamily="monospace" textAnchor="middle">W₁ ({DIM}×{FFN_DIM})</text>
-      <rect x="80" y="65" width="60" height={hiddenNeurons * 38} rx="4" fill="#E8E6D8" stroke="#B0B09A" strokeWidth="1" />
+      <rect x="80" y="65" width="60" height={hiddenNeurons * 38} rx="4" fill="#D0CEBA" stroke="#B0B09A" strokeWidth="1" />
 
       {/* ── Hidden neurons (GELU activated) ─────────────────────── */}
-      <text x="240" y="55" fill="#86efac" fontSize="10" fontFamily="monospace" textAnchor="middle">Hidden (GELU)</text>
+      <text x="240" y="55" fill="#059669" fontSize="10" fontFamily="monospace" textAnchor="middle">Hidden (GELU)</text>
       <text x="240" y="68" fill="#7A7A6E" fontSize="8" fontFamily="monospace" textAnchor="middle">{FFN_DIM} neurons</text>
       {Array.from({ length: hiddenNeurons }, (_, i) => {
         const raw = layer?.ffnHidden[0]?.[i] ?? 0
         return (
           <g key={i}>
             <circle cx="240" cy={90 + i * 38} r="14"
-              fill="#E8E6D8" stroke={valueColor(raw)} strokeWidth="2" />
+              fill="#D0CEBA" stroke={valueColor(raw)} strokeWidth="2" />
             <text x="240" y={95 + i * 38} fill={valueColor(raw)} fontSize="7" fontFamily="monospace" textAnchor="middle">
               {raw.toFixed(1)}
             </text>
@@ -535,7 +535,7 @@ function FFNDeepdive({ state }: { state: TransformerState }) {
 
       {/* ── W2 label ────────────────────────────────────────────── */}
       <text x="308" y="55" fill="#7A7A6E" fontSize="9" fontFamily="monospace" textAnchor="middle">W₂ ({FFN_DIM}×{DIM})</text>
-      <rect x="278" y="65" width="60" height={hiddenNeurons * 38} rx="4" fill="#E8E6D8" stroke="#B0B09A" strokeWidth="1" />
+      <rect x="278" y="65" width="60" height={hiddenNeurons * 38} rx="4" fill="#D0CEBA" stroke="#B0B09A" strokeWidth="1" />
 
       {/* ── Output neurons ──────────────────────────────────────── */}
       <text x="420" y="55" fill="#7A7A6E" fontSize="10" fontFamily="monospace" textAnchor="middle">Output</text>
@@ -545,7 +545,7 @@ function FFNDeepdive({ state }: { state: TransformerState }) {
         return (
           <g key={i}>
             <circle cx="420" cy={90 + i * 55} r="18"
-              fill="#E8E6D8" stroke={valueColor(v)} strokeWidth="2" />
+              fill="#D0CEBA" stroke={valueColor(v)} strokeWidth="2" />
             <text x="420" y={95 + i * 55} fill={valueColor(v)} fontSize="7" fontFamily="monospace" textAnchor="middle">
               {v.toFixed(2)}
             </text>
@@ -554,17 +554,17 @@ function FFNDeepdive({ state }: { state: TransformerState }) {
       })}
 
       {/* ── GELU curve ──────────────────────────────────────────── */}
-      <text x="800" y="255" fill="#86efac" fontSize="10" fontWeight="bold" fontFamily="monospace" textAnchor="middle">GELU Activation</text>
-      <rect x="608" y="270" width="380" height="150" rx="6" fill="#E8E6D8" stroke="#1e3a2a" strokeWidth="1" />
+      <text x="800" y="255" fill="#059669" fontSize="10" fontWeight="bold" fontFamily="monospace" textAnchor="middle">GELU Activation</text>
+      <rect x="608" y="270" width="380" height="150" rx="6" fill="#D0CEBA" stroke="#1e3a2a" strokeWidth="1" />
       {/* Axes */}
       <line x1="620" y1="340" x2="980" y2="340" stroke="#B0B09A" strokeWidth="1" />
       <line x1="800" y1="280" x2="800" y2="415" stroke="#B0B09A" strokeWidth="1" />
       <text x="982" y="344" fill="#7A7A6E" fontSize="8" fontFamily="monospace">x</text>
       <text x="803" y="278" fill="#7A7A6E" fontSize="8" fontFamily="monospace">y</text>
       {/* Curve */}
-      <path d={geluPath} fill="none" stroke="#86efac" strokeWidth="2" />
+      <path d={geluPath} fill="none" stroke="#059669" strokeWidth="2" />
       {/* Annotation */}
-      <text x="620" y="435" fill="#4ade80" fontSize="8" fontFamily="monospace">GELU(x) = 0.5x·(1+tanh(√(2/π)·(x+0.044715x³)))</text>
+      <text x="620" y="435" fill="#16a34a" fontSize="8" fontFamily="monospace">GELU(x) = 0.5x·(1+tanh(√(2/π)·(x+0.044715x³)))</text>
       <text x="620" y="450" fill="#7A7A6E" fontSize="8" fontFamily="monospace">Smoother than ReLU — allows small negative outputs</text>
 
       {/* ── Formula boxes ────────────────────────────────────────── */}
@@ -620,8 +620,8 @@ function PredictionDeepdive({
       {/* ── Temperature effect ──────────────────────────────────── */}
       <text x="280" y="50" fill="#7A7A6E" fontSize="10" fontFamily="monospace">Temperature (τ) Effect</text>
 
-      <rect x="280" y="60" width="340" height="50" rx="6" fill="#E8E6D8" stroke="#B0B09A" strokeWidth="1" />
-      <text x="290" y="82" fill="#fcd34d" fontSize="10" fontFamily="monospace">τ = {state.temperature.toFixed(1)}</text>
+      <rect x="280" y="60" width="340" height="50" rx="6" fill="#D0CEBA" stroke="#B0B09A" strokeWidth="1" />
+      <text x="290" y="82" fill="#d97706" fontSize="10" fontFamily="monospace">τ = {state.temperature.toFixed(1)}</text>
       <text x="290" y="100" fill="#7A7A6E" fontSize="9" fontFamily="monospace">
         {state.temperature < 0.7 ? 'Sharp / deterministic — top token dominates' :
          state.temperature > 1.3 ? 'Flat / random — uniform-ish distribution' :
@@ -641,8 +641,8 @@ function PredictionDeepdive({
       <text x="280" y="170" fill="#9A9A8E" fontSize="8" fontFamily="monospace">τ=0.1 (greedy) ←────────────────→ τ=2.0 (random)</text>
 
       {/* Softmax formula */}
-      <rect x="280" y="185" width="340" height="60" rx="6" fill="#E8E6D8" stroke="#B0B09A" strokeWidth="1" />
-      <text x="290" y="206" fill="#10b981" fontSize="10" fontWeight="bold" fontFamily="monospace">Softmax with temperature</text>
+      <rect x="280" y="185" width="340" height="60" rx="6" fill="#D0CEBA" stroke="#B0B09A" strokeWidth="1" />
+      <text x="290" y="206" fill="#047857" fontSize="10" fontWeight="bold" fontFamily="monospace">Softmax with temperature</text>
       <text x="290" y="226" fill="#7A7A6E" fontSize="10" fontFamily="monospace">P(token) = exp(logit / τ) / Σ exp(logit / τ)</text>
       <text x="290" y="242" fill="#7A7A6E" fontSize="9" fontFamily="monospace">τ→0: argmax.  τ=1: standard.  τ→∞: uniform</text>
 
@@ -673,7 +673,7 @@ function PredictionDeepdive({
       {state.topPredictions.map((pred, rank) => (
         <g key={rank}>
           <rect x="660" y={60 + rank * 104} width="520" height="94" rx="8"
-            fill="#E8E6D8"
+            fill="#D0CEBA"
             stroke={rank === 0 ? '#f59e0b' : '#B0B09A'}
             strokeWidth={rank === 0 ? 2.5 : 1} />
           <circle cx="692" cy={107 + rank * 104} r="18"

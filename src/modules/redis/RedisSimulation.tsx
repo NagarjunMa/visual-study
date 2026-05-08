@@ -109,13 +109,13 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
 
           {/* Memory Bar */}
           <g>
-            <rect x="50" y="20" width="400" height="30" rx="4" fill="#E8E6D8" stroke="#B0B09A" strokeWidth="2" />
+            <rect x="50" y="20" width="400" height="30" rx="4" fill="#D0CEBA" stroke="#B0B09A" strokeWidth="2" />
             <motion.rect
               x="54"
               y="24"
               height="22"
               rx="2"
-              fill={memoryPct > 80 ? '#ef4444' : memoryPct > 50 ? '#f59e0b' : '#22c55e'}
+              fill={memoryPct > 80 ? '#ef4444' : memoryPct > 50 ? '#d97706' : '#16a34a'}
               animate={{ width: Math.min((memoryUsed / state.capacity) * 392, 392) }}
               transition={{ duration: 0.3 }}
             />
@@ -126,7 +126,7 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
 
           {/* Hash Table (8 buckets) */}
           <g>
-            <text x="50" y="80" fill="#22c55e" fontSize="14" fontWeight="bold" fontFamily="monospace">
+            <text x="50" y="80" fill="#16a34a" fontSize="14" fontWeight="bold" fontFamily="monospace">
               Hash Table (8 buckets)
             </text>
 
@@ -156,7 +156,7 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
                       width="120"
                       height="28"
                       rx="3"
-                      fill="#E8E6D8"
+                      fill="#D0CEBA"
                       stroke="#0ea5e9"
                       strokeWidth="1"
                     />
@@ -164,7 +164,7 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
                     <text
                       x={90 + entryIdx * 130}
                       y={100 + bucketIdx * 50 + 18}
-                      fill="#38bdf8"
+                      fill="#0284c7"
                       fontSize="10"
                       fontFamily="monospace"
                     >{`${entry.key}=${entry.value}`}</text>
@@ -187,7 +187,7 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
 
           {/* LRU List */}
           <g>
-            <text x="50" y="520" fill="#22c55e" fontSize="14" fontWeight="bold" fontFamily="monospace">
+            <text x="50" y="520" fill="#16a34a" fontSize="14" fontWeight="bold" fontFamily="monospace">
               LRU Chain (MRU → LRU)
             </text>
 
@@ -392,12 +392,12 @@ function LRUChainRenderer({
       {nodes.map((key, idx) => (
         <g key={`lru-${key}`}>
           {/* Box */}
-          <rect x={startX + idx * 100} y={y} width="85" height="25" rx="3" fill="#E8E6D8" stroke="#fbbf24" strokeWidth="1" />
+          <rect x={startX + idx * 100} y={y} width="85" height="25" rx="3" fill="#D0CEBA" stroke="#fbbf24" strokeWidth="1" />
           {/* Label */}
           <text
             x={startX + idx * 100 + 43}
             y={y + 16}
-            fill="#fcd34d"
+            fill="#d97706"
             fontSize="9"
             fontFamily="monospace"
             textAnchor="middle"

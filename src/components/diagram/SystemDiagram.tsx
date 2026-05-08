@@ -69,11 +69,11 @@ export function SystemDiagram({ stage, particles, metrics, tick, showStatefulBub
       >
         <defs>
           <pattern id="dots" width={40} height={40} patternUnits="userSpaceOnUse">
-            <circle cx={20} cy={20} r={1} fill="#B0B09A" opacity={0.3} />
+            <circle cx={20} cy={20} r={1} fill="#9A9A86" opacity={0.4} />
           </pattern>
 
           <marker id="arrowhead" markerWidth={10} markerHeight={10} refX={8} refY={3} orient="auto">
-            <polygon points="0 0, 10 3, 0 6" fill="#8A8A76" />
+            <polygon points="0 0, 10 3, 0 6" fill="#6B6B5A" />
           </marker>
 
           <filter id="particle-glow">

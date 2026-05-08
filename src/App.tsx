@@ -8,6 +8,8 @@ import { RedisSimulation } from './modules/redis/RedisSimulation'
 import { LSMSimulation } from './modules/lsm/LSMSimulation'
 import { BTreeSimulation } from './modules/btree/BTreeSimulation'
 import { TransformerSimulation } from './modules/transformer/TransformerSimulation'
+import { TCPSimulation } from './modules/tcp/TCPSimulation'
+import { KafkaSimulation } from './modules/kafka/KafkaSimulation'
 
 function App() {
   const [currentStageIndex, setCurrentStageIndex] = useState(0)
@@ -89,7 +91,7 @@ function App() {
             fixModes={currentStage.fixModes}
             fixModeIndex={fixModeIndex}
             onAdvanceFix={() => setFixModeIndex(idx => idx + 1)}
-            onSetFixMode={currentStage.moduleType === 'transformer' ? setFixModeIndex : undefined}
+            onSetFixMode={currentStage.moduleType === 'transformer' || currentStage.moduleType === 'tcp' || currentStage.moduleType === 'kafka' ? setFixModeIndex : undefined}
           />
         </div>
 
@@ -127,6 +129,10 @@ function App() {
             <BTreeSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
           ) : currentStage.moduleType === 'transformer' ? (
             <TransformerSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
+          ) : currentStage.moduleType === 'tcp' ? (
+            <TCPSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
+          ) : currentStage.moduleType === 'kafka' ? (
+            <KafkaSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
           ) : (
             <SystemDiagram
               stage={diagramStage}

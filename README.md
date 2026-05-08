@@ -1,275 +1,151 @@
-# Visual Learning - System Design & Database Internals Simulator
+# Visual Learning — Interactive System Design, Database & AI Simulator
 
-> Interactive learning: 6 system design stages + 3 database modules. Real-time visualization of scaling challenges, cache patterns, and data structure internals.
+> See how systems actually work. 12 interactive simulations across 6 tracks — system design, databases, AI, networking, and message brokers. Free, no signup.
 
-[![Node.js](https://img.shields.io/badge/Node.js-20+-green.svg)](https://nodejs.org/)
-[![React](https://img.shields.io/badge/React-19.2-blue.svg)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-5.4-purple.svg)](https://vitejs.dev/)
+[![React](https://img.shields.io/badge/React-18-blue.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue.svg)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-5.4-purple.svg)](https://vitejs.dev/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 
-## Overview
+## What Is This?
 
-**9 progressive stages** teaching distributed systems + database internals:
+Interactive SVG simulations where you **watch, break, and fix** real systems in real time. Not static diagrams. Not videos. Live animated simulations.
 
-**System Design (Stages 1-6):** particle-based, tick-driven metrics
-- Single-server baselines & limitations
-- Stateful vs stateless design
+### 6 Learning Tracks, 12 Simulations
+
+**System Design (Stages 1-6)** — Particle-based, tick-driven metrics
+- Baseline architecture & scaling limits
+- Stateful vs stateless authentication
+- API gateway & rate limiting
 - Load balancing & health checks
-- API gateways & rate limiting
 - Caching strategies & connection pooling
-- Data replication & resilience
+- Data replication & read replicas
 
-**Database Internals (Stages 7-9):** interactive, user-driven operations
-- **Stage 7:** Redis KV store (hash table, LRU eviction, persistence modes)
-- **Stage 8:** Cassandra LSM tree (Memtable, SSTables, Bloom filters, compaction)
-- **Stage 9:** PostgreSQL B+ Tree (page splits, leaf chain, range scans)
+**Database Internals (Stages 7-9)** — Interactive, user-driven operations
+- **Redis KV Store:** Hash table, LRU eviction, RDB/AOF persistence, crash recovery
+- **Cassandra LSM Tree:** WAL, Memtable, SSTables, Bloom filters, compaction
+- **PostgreSQL B+ Tree:** Page splits, leaf chain linking, range scans, CTIDs
+
+**AI/ML (Stage 10)** — GPT-style transformer inference
+- **LLM Transformer:** Tokenize → embed → multi-head attention → FFN/GELU → softmax → next token prediction
+- Deep dives: attention heatmap, FFN neurons, temperature/sampling
+
+**Networking (Stage 11)** — Protocol state machines
+- **TCP 3-Way Handshake:** SYN/SYN-ACK/ACK, connection lifecycle, SYN timeout with exponential backoff, RST, FIN/TIME-WAIT
+
+**Message Brokers (Stage 12)** — Progressive reveal architecture
+- **Apache Kafka:** Builds understanding layer by layer:
+  1. Simple append-only log (producer → log → consumer)
+  2. Partition routing (hash(key) % N)
+  3. Broker replication (leader/follower, ISR, acks=1 vs acks=all)
+  4. Broker failure & leader election
+  5. Consumer group rebalancing
 
 ## Features
 
-✨ **9-Stage Progression + Database Modules**
-- Stages 1-6: System design with live metrics (RPS, latency, CPU, pool usage)
-- Stages 7-9: Interactive database simulations (SET/GET/DELETE operations)
-
-🎨 **Real-Time Visualization**
-- Particles flow through architecture showing request paths
-- Color-coded health states: green (healthy), amber (stressed), red (overloaded)
-- Animated connections with directional flow indicators
-- Component boxes show live metrics (RPS, latency, CPU, pool usage)
-
-📊 **Live Metrics Dashboard**
-- Requests per second (RPS)
-- Latency (milliseconds)
-- Error rate (%)
-- Per-server CPU utilization
-- Cache hit rate (%)
-- DB connection pool usage (%)
-
-⏱️ **Smooth Animations**
-- 6-second sigmoid ramps for load progression
-- Physics-based particle motion (Framer Motion)
-- Health pulse rings for stressed/overloaded nodes
-- Smooth state transitions on architecture changes
-
-🐳 **Docker Ready**
-- Multi-stage Dockerfile (Node builder → Nginx runtime)
-- Production-optimized with gzip, caching headers, health checks
-- Single command to run: `make docker-run`
+- **Real-time particle flow** — Watch 5K requests/sec traverse your architecture
+- **Live metrics dashboard** — RPS, latency, CPU, cache hit rate, connection pool
+- **Progressive problem → fix flow** — See metrics change as you apply solutions
+- **Interactive controls** — Insert keys, crash servers, adjust temperature
+- **Retro-OS clean design** — Sage/cream palette, pixel fonts, window chrome
+- **Scroll-triggered animations** — Window cascades, monitor flicker, scanline sweeps
+- **100% client-side** — No backend, no signup, no data collection
 
 ## Quick Start
 
-### Prerequisites
-
-- **Node.js** 20+ ([download](https://nodejs.org/))
-- **npm** 10+
-- **Docker** 20+ (optional, for containerized deployment)
-
-### Installation
-
 ```bash
-# Clone repository
-git clone <repo-url>
-cd visual-learning
+# Install
+npm ci
 
-# Install dependencies
-make install
-
-# Or manually:
-npm ci --frozen-lockfile
-```
-
-### Development
-
-```bash
-# Start dev server with HMR
+# Dev server (localhost:5173)
 make dev
-# Opens http://localhost:5173
 
-# Run checks
-make check
-
-# Build for production
+# Production build
 make build
-
-# Preview production build
-make preview
 ```
 
-### Deployment
-
-#### Docker
+### Docker
 
 ```bash
-# Build Docker image
-make docker-build
-
-# Run container (port 3000)
-make docker-run
-
-# View logs
-make docker-logs
-
-# Stop & clean
-make docker-clean
+make docker-build   # Multi-stage: Node → Nginx
+make docker-run     # Serve on port 3000
 ```
 
-#### Static Hosting (Vercel, Netlify, etc.)
+### Static Hosting
 
-```bash
-make build
-# Deploy the `dist/` folder
-```
+Deploy the `dist/` folder to Vercel, Netlify, or any static host.
 
 ## Architecture
 
-### Codebase Structure
-
 ```
 src/
-├── App.tsx                   # Main layout component
-├── index.css                 # Tailwind + animations
+├── App.tsx                    # Router: moduleType → simulation component
 ├── simulation/
-│   ├── types.ts              # TypeScript types (core domain model)
-│   ├── stages.ts             # 10 stage configurations
-│   └── engine.ts             # Simulation logic & particle spawning
-└── components/
-    ├── ControlPanel.tsx      # Stage selector + metrics
-    └── diagram/
-        ├── SystemDiagram.tsx # SVG canvas & health computation
-        ├── ComponentBox.tsx   # Node rendering (boxes + icons)
-        ├── FlowConnection.tsx # Animated edges
-        └── RequestParticle.tsx # Particle animation
+│   ├── types.ts               # Core types + moduleType union
+│   ├── stages.ts              # 12 stage configurations across 6 tracks
+│   └── engine.ts              # Tick-based simulation (stages 1-6)
+├── components/
+│   ├── LandingPage.tsx        # 7-section landing page, 6-track folder tree
+│   ├── InfoCard.tsx           # Sidebar info + fix mode buttons
+│   └── diagram/               # SVG system diagram (stages 1-6)
+└── modules/
+    ├── redis/                 # Stage 7: hash table, LRU, persistence
+    ├── lsm/                   # Stage 8: WAL, Memtable, SSTables, Bloom
+    ├── btree/                 # Stage 9: B+ tree, splits, range scans
+    ├── transformer/           # Stage 10: GPT decoder, attention, FFN, softmax
+    ├── tcp/                   # Stage 11: 3-way handshake, connection lifecycle
+    └── kafka/                 # Stage 12: progressive reveal message broker
 ```
 
 ### Tech Stack
 
 | Layer | Tech | Why |
 |-------|------|-----|
-| **UI Framework** | React 18 | Hooks for simulation state, efficient re-renders |
-| **Build Tool** | Vite 5.4 | Fast HMR, optimized production bundles |
-| **Language** | TypeScript 6.0 | Type safety for complex simulation logic |
-| **Styling** | Tailwind CSS | Dark theme, utility-first, zero unused CSS |
-| **Animation** | Framer Motion | Physics-based particle motion, smooth transitions |
-| **Graphics** | SVG | Scalable vector diagrams, performant rendering |
-| **Server** | Nginx (Docker) | Minimal footprint, excellent static file serving |
+| UI | React 18 | Hooks for simulation state |
+| Build | Vite 5.4 | Fast HMR, optimized bundles |
+| Language | TypeScript | Type safety for simulation logic |
+| Styling | Tailwind CSS | Retro clean theme, utility-first |
+| Animation | Framer Motion | SVG particle motion |
+| Graphics | SVG | Scalable, performant rendering |
 
-### Key Design Patterns
+### Design System
 
-- **Functional Hooks:** No global state, single source of truth per component
-- **Deterministic Metrics:** Computed from tick number, no randomness (except particles)
-- **Data-Driven Stages:** All stage configs in `stages.ts`, no hardcoded logic
-- **SVG Waypoints:** Particle motion via interpolated waypoint arrays
-- **Health State Machine:** Node colors computed from live metrics
+- **Palette:** Sage bg `#C5C6A8`, cream surfaces `#F0F0E8`, coral accent `#D4654A`, retro blue `#4A6FA5`
+- **Fonts:** Press Start 2P (headings), Space Mono (body), VT323 (terminal)
+- **Buttons:** Warm cream pill with gold double border (`.retro-btn`)
+- **Windows:** Retro-OS chrome with colored title bars
 
-## Making Changes
+## Adding a New Module
 
-### Add a New Stage
+Follow the established pattern:
 
-1. Define stage config in `src/simulation/stages.ts`:
-   ```typescript
-   export const stage11: Stage = {
-     id: 'stage-11',
-     title: 'Your Stage',
-     subtitle: 'Problem description',
-     insight: 'What to observe',
-     nodes: [ /* ... */ ],
-     edges: [ /* ... */ ],
-     viewBox: '0 0 1600 440',
-   }
-   ```
-
-2. Add metrics in `src/simulation/engine.ts` `computeMetrics()`:
-   ```typescript
-   case 'stage-11': {
-     return { rps: 10000, latencyMs: 50, /* ... */ }
-   }
-   ```
-
-3. Add waypoints in `getWaypoints()`:
-   ```typescript
-   case 'stage-11':
-     return [ /* particle paths */ ]
-   ```
-
-4. Update `stages` array export to include `stage11`
-
-### Update Node Icons
-
-Edit `ComponentBox.tsx` → `renderIcon()` function. Add SVG for new `NodeType`.
-
-### Adjust Animation Speed
-
-In `engine.ts`, sigmoid curve: change `360` (6 seconds) to different value.
-
-## Project Commands
-
-```bash
-make help           # Show all available commands
-make install        # Install dependencies
-make dev            # Start development server
-make build          # Build for production
-make preview        # Preview production build locally
-make lint           # Run ESLint
-make check          # Verify environment setup
-make clean          # Remove build artifacts & node_modules
-
-# Docker
-make docker-build   # Build Docker image
-make docker-run     # Run container (port 3000)
-make docker-stop    # Stop container
-make docker-logs    # View live logs
-make docker-shell   # Open shell in running container
-make docker-clean   # Remove image & container
-```
-
-## Browser Support
-
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
-- Edge 90+
+1. Create `src/modules/mymodule/` with 3 files:
+   - `mymodule.types.ts` — State & action types
+   - `MyModuleEngine.ts` — Pure functions
+   - `MyModuleSimulation.tsx` — `useReducer` + SVG
+2. Add stage in `stages.ts` with `moduleType: 'mymodule'`
+3. Import + routing in `App.tsx`
 
 ## Performance
 
-- **Build Size:** ~340 KB (gzipped ~107 KB)
-- **Page Load:** <1s on 3G
-- **Animations:** 60 FPS on modern devices
-- **Particle Limit:** ~100 concurrent particles
+- **Build:** ~494 KB gzip (~145 KB compressed)
+- **Page load:** <1s on 3G
+- **Animations:** 60 FPS, CSS keyframes for scroll effects
+- **Reduced motion:** Full `prefers-reduced-motion` support
 
-## Contributing
+## Roadmap
 
-Contributions welcome! Areas:
-
-- [ ] Additional stages (distributed transactions, circuit breakers, etc.)
-- [ ] Mobile-optimized UI
-- [ ] Educational content (blog posts, video tutorials)
-- [ ] Multi-language support
-- [ ] Advanced metrics (p99 latency, queue depth visualization)
+Planned:
+- [ ] Virtual Memory & Page Faults (OS internals)
+- [ ] Raft Consensus (distributed systems)
+- [ ] Event Loop & Task Queues (runtime internals)
+- [ ] Rate Limiting Algorithms (distributed patterns)
+- [ ] Consistent Hashing (sharding)
 
 ## License
 
 MIT
 
-## FAQ
-
-**Q: Is this a production system?**
-No, this is an educational tool. Metrics are simplified simulations, not real measurements.
-
-**Q: Can I deploy this myself?**
-Yes! `make docker-run` or deploy `dist/` to any static host.
-
-**Q: Can I modify the stages?**
-Yes! All stage configs are in `src/simulation/stages.ts`. See "Making Changes" above.
-
-**Q: What if I have a bug or feature request?**
-Open an issue on GitHub with details.
-
-## Learning Resources
-
-- [System Design Primer](https://github.com/donnemartin/system-design-primer)
-- [Designing Data-Intensive Applications](https://dataintensive.net/) (Book)
-- [High Scalability](http://highscalability.com/) (Blog)
-
 ---
 
-Built with ❤️ for system design learners.
+Built for visual learners who want to see how systems actually work.
