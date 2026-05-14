@@ -1,10 +1,10 @@
 VISUAL LEARNING - PROGRESS TRACKER
 ===================================
-Updated: 2026-05-07
+Updated: 2026-05-14
 
 === CURRENT STATE ===
-10 stages live, 4 tracks, retro clean UI
-Build: 448 modules, ~135KB gzip
+14 stages live, 8 tracks, retro clean UI
+Build: 456 modules, 555 KB / 160 KB gzip
 
 === COMPLETED PHASES ===
 
@@ -43,9 +43,9 @@ PHASE 5: UI REDESIGN — Retro Clean Palette
 ✓ Color scheme: dark CRT → sage/olive bg (#C5C6A8), cream surfaces (#F0F0E8), coral accent (#D4654A)
 ✓ Typography: added Space Mono for body, pixel font for labels
 ✓ Buttons: retro pill with gold double border (.retro-btn)
-✓ Navigation: flat grid → collapsible 3-track folder tree
+✓ Navigation: flat grid → collapsible folder tree
 ✓ Window chrome: retro blue title bars, colored controls
-✓ ALL simulation views updated to retro palette (diagram, Redis, LSM, BTree, Transformer)
+✓ ALL simulation views updated to retro palette
 ✓ Sidebar + InfoCard restyled
 
 PHASE 6: LANDING PAGE CONTENT
@@ -63,22 +63,63 @@ PHASE 7: SCROLL ANIMATIONS
 ✓ prefers-reduced-motion support
 ✓ skipHero: all sections revealed immediately on ESC back
 
+PHASE 8: TCP 3-WAY HANDSHAKE (Stage 11)
+✓ Client/server state machine: CLOSED → SYN_SENT → ESTABLISHED → FIN_WAIT → TIME_WAIT
+✓ SYN/SYN-ACK/ACK packet animation
+✓ Fix modes: SYN timeout (exponential backoff), RST, connection close & TIME-WAIT
+
+PHASE 9: APACHE KAFKA (Stage 12)
+✓ Progressive reveal pattern — each fix mode adds one layer:
+  - Base: simple append-only log (producer → log → consumer)
+  - Fix 0: partitions with hash routing (key → partition)
+  - Fix 1: broker replication (leader/follower, ISR, acks=1 vs acks=all)
+  - Fix 2: broker failure & leader election (kill/revive, controller)
+  - Fix 3: consumer group rebalancing (add/remove consumers)
+✓ Controls scoped to current mode — no information overload
+
+PHASE 10: RATE LIMITING (Stage 13)
+✓ Progressive reveal — 5 algorithms across fix modes:
+  - Base: no limiter, server crash demo
+  - Fix 0: Token Bucket (capacity + refill rate, allows burst)
+  - Fix 1: Sliding Window Log (precise but O(N) memory)
+  - Fix 2: Fixed Window Counter (cheap but 2x burst at boundary — thundering herd demo)
+  - Fix 3: Sliding Window Counter (weighted previous + current window)
+  - Fix 4: Leaky Bucket (FIFO queue, constant drain rate, smoothing)
+✓ Mode-specific control sliders (capacity, refill, drain, window, limit)
+✓ Auto-send + manual burst trigger for fixed-window thundering herd
+✓ Live counters: total/allowed/rejected/queued
+
+PHASE 11: SHAZAM AUDIO FINGERPRINTING (Stage 14)
+✓ Progressive reveal — full audio recognition pipeline:
+  - Base: animated composite waveform (why raw matching fails)
+  - Fix 0: Spectrogram (24×16 grid, energy color-coded, builds left-to-right)
+  - Fix 1: Constellation Map (local maxima peak detection, threshold slider)
+  - Fix 2: Fingerprint Hashing (anchor + target zone, (f₁,f₂,Δt) → 32-bit hash, formula display)
+  - Fix 3: Database Lookup (5 fake songs, hash matching, per-song bars)
+  - Fix 4: Time-Offset Histogram (correct song spikes, others scatter, MATCH FOUND)
+✓ Deterministic data: 5 songs (Electronic Beat, Piano Melody, Rock Guitar, Jazz Trumpet, Pop Vocal)
+✓ Query = noisy shifted subset of Rock Guitar (guarantees match demo)
+✓ Pure math (no Web Audio API): gaussian energy spread, 3×3 local maxima, LCG random
+
 === BUG FIXES ===
 
 Redis: fixModeIndex sync, AOF doubling, eviction scope, RDB timing
 B+ Tree: layout x=0 bug, edge routing, leaf rightLink arrows
 Transformer: unused imports/variables
+Kafka: TS6133 unused parts/slot
+Rate Limiter: missing useState import
+Shazam: unused rng const in defineSongs
 UI: retro-window opacity blocking in revealed scroll sections
 
-=== PLANNED (Stages 11-15) ===
+=== PLANNED (Stages 15+) ===
 
-Stage 11: TCP 3-Way Handshake — SYN/ACK/RST, connection lifecycle, TIME-WAIT
-Stage 12: Virtual Memory & Page Faults — TLB, page table walk, page replacement
-Stage 13: Raft Consensus — leader election, log replication, split brain
-Stage 14: Event Loop & Task Queues — call stack, microtask/macrotask, Promise vs setTimeout
-Stage 15: Rate Limiting — token bucket, sliding window log, sliding window counter
+Stage 15: Virtual Memory & Page Faults — TLB, page table walk, page replacement
+Stage 16: Raft Consensus — leader election, log replication, split brain
+Stage 17: Event Loop & Task Queues — call stack, microtask/macrotask, Promise vs setTimeout
+Stage 18: Consistent Hashing — ring, virtual nodes, rebalancing
+Stage 19: CRDT / Vector Clocks — conflict-free replication, causality
 
 === FILES ===
 
-Modules: 12 files (4 modules × 3 files)
-  src/modules/{redis,lsm,btree,transformer}/ — types, engine, simulation each
+Modules: 24 files (8 modules × 3 files)
+  src/modules/{redis,lsm,btree,transformer,tcp,kafka,rate-limiter,shazam}/ — types, engine, simulation each

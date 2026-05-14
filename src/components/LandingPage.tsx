@@ -17,6 +17,8 @@ interface Track {
 const DB_TYPES = new Set(['redis-kv', 'lsm', 'btree'])
 const NET_TYPES = new Set(['tcp'])
 const MSG_TYPES = new Set(['kafka'])
+const RL_TYPES = new Set(['rate-limiter'])
+const AUDIO_TYPES = new Set(['shazam'])
 
 function getTracks(stages: Stage[]): Track[] {
   const sysDesign: number[] = []
@@ -24,12 +26,16 @@ function getTracks(stages: Stage[]): Track[] {
   const ai: number[] = []
   const networking: number[] = []
   const messaging: number[] = []
+  const rateLimiting: number[] = []
+  const audio: number[] = []
 
   stages.forEach((stage, idx) => {
     if (stage.moduleType === 'transformer') ai.push(idx)
     else if (stage.moduleType && DB_TYPES.has(stage.moduleType)) database.push(idx)
     else if (stage.moduleType && NET_TYPES.has(stage.moduleType)) networking.push(idx)
     else if (stage.moduleType && MSG_TYPES.has(stage.moduleType)) messaging.push(idx)
+    else if (stage.moduleType && RL_TYPES.has(stage.moduleType)) rateLimiting.push(idx)
+    else if (stage.moduleType && AUDIO_TYPES.has(stage.moduleType)) audio.push(idx)
     else if (!stage.moduleType) sysDesign.push(idx)
   })
 
@@ -45,6 +51,14 @@ function getTracks(stages: Stage[]): Track[] {
 
   if (messaging.length > 0) {
     tracks.push({ name: 'MESSAGE BROKERS', description: `${messaging.length} simulation — distributed messaging`, stageIndices: messaging })
+  }
+
+  if (rateLimiting.length > 0) {
+    tracks.push({ name: 'RATE LIMITING', description: `${rateLimiting.length} simulation — request throttling algorithms`, stageIndices: rateLimiting })
+  }
+
+  if (audio.length > 0) {
+    tracks.push({ name: 'AUDIO / SIGNAL PROCESSING', description: `${audio.length} simulation — audio fingerprinting`, stageIndices: audio })
   }
 
   return tracks

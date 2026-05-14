@@ -2,7 +2,7 @@
 
 ## Project
 
-Interactive learning simulator: 12 stages across 6 tracks. Teaches system design, database internals, LLM inference, networking, and message brokers through real-time SVG visualization.
+Interactive learning simulator: 14 stages across 8 tracks. Teaches system design, database internals, LLM inference, networking, message brokers, rate limiting, and audio fingerprinting through real-time SVG visualization.
 
 **Tracks & Stages:**
 - **System Design (1-6):** Distributed system scaling, bottlenecks, caching, replication
@@ -10,8 +10,10 @@ Interactive learning simulator: 12 stages across 6 tracks. Teaches system design
 - **AI/ML (10):** LLM Transformer inference (tokenize → embed → attention → FFN → softmax → predict)
 - **Networking (11):** TCP 3-way handshake, SYN timeout, RST, connection close, TIME-WAIT
 - **Message Brokers (12):** Kafka — progressive reveal: log → partitions → replication → failure → consumer groups
+- **Rate Limiting (13):** 5 algorithms — Token Bucket, Sliding Window Log, Fixed Window (thundering herd demo), Sliding Window Counter, Leaky Bucket
+- **Audio / Signal Processing (14):** Shazam pipeline — waveform → STFT spectrogram → constellation peaks → combinatorial hashing → time-offset histogram match
 
-**Target:** System design interview prep; database internals learning; AI/ML understanding; networking fundamentals; distributed messaging.
+**Target:** System design interview prep; database internals learning; AI/ML understanding; networking fundamentals; distributed messaging; rate limiting; audio fingerprinting.
 
 ## Tech Stack
 
@@ -37,7 +39,7 @@ Interactive learning simulator: 12 stages across 6 tracks. Teaches system design
 
 ### Simulation Engine (`src/simulation/`)
 - `types.ts` - Single source of truth (NodeType, NodeHealth, Metrics, ParticleType, moduleType union)
-- `stages.ts` - 12 stage configurations + fixModes
+- `stages.ts` - 14 stage configurations + fixModes
 - `engine.ts` - `useSimulation` hook: metrics computation, particle spawning (stages 1-6 only)
 
 ### Diagram System (`src/components/diagram/`)
@@ -51,7 +53,7 @@ Interactive learning simulator: 12 stages across 6 tracks. Teaches system design
 - `InfoCard.tsx` - Left sidebar: info cards + fix mode buttons (toggle mode for transformer)
 
 ### Module Pattern (`src/modules/`)
-Each interactive module (stages 7-12) follows:
+Each interactive module (stages 7-14) follows:
 ```
 src/modules/[name]/
 ├── [name].types.ts        # State interfaces, action types
@@ -59,7 +61,7 @@ src/modules/[name]/
 └── [Name]Simulation.tsx   # useReducer + SVG rendering + controls
 ```
 
-## 12-Stage Learning Progression
+## 14-Stage Learning Progression
 
 **System Design (1-6):** Tick-based, particle flow, live metrics HUD.
 
@@ -98,17 +100,29 @@ src/modules/[name]/
 |-------|--------|-------------------|
 | **12** | Kafka | Base: simple log → Partitions: hash routing → Replication: ISR/acks → Failure: leader election → Consumer groups: rebalancing |
 
+**Rate Limiting (13):** Progressive reveal — each fix mode swaps in a different algorithm.
+
+| Stage | Module | Progressive Modes |
+|-------|--------|-------------------|
+| **13** | Rate Limiter | Base: no limiter (crash demo) → Token Bucket → Sliding Window Log → Fixed Window (thundering herd) → Sliding Window Counter → Leaky Bucket |
+
+**Audio / Signal Processing (14):** Progressive reveal — full Shazam algorithm pipeline.
+
+| Stage | Module | Progressive Modes |
+|-------|--------|-------------------|
+| **14** | Shazam | Base: waveform → Spectrogram (STFT grid) → Constellation (peak extraction) → Hashing (anchor+target, (f₁,f₂,Δt)) → Database lookup → Time-offset histogram match |
+
 ## File Structure
 
 ```
 src/
 ├── App.tsx                      # Router: moduleType → component
 ├── simulation/
-│   ├── types.ts                 # moduleType union: btree|lsm|redis-kv|transformer|tcp|kafka
-│   ├── stages.ts                # 12 stages across 6 tracks
+│   ├── types.ts                 # moduleType union: btree|lsm|redis-kv|transformer|tcp|kafka|rate-limiter|shazam
+│   ├── stages.ts                # 14 stages across 8 tracks
 │   └── engine.ts                # useSimulation for stages 1-6
 ├── components/
-│   ├── LandingPage.tsx          # 7-section landing + 6-track folder tree
+│   ├── LandingPage.tsx          # 7-section landing + 8-track folder tree
 │   ├── InfoCard.tsx             # Sidebar content + retro pill fix buttons
 │   └── diagram/                 # Stages 1-6 SVG system
 └── modules/
@@ -117,7 +131,9 @@ src/
     ├── btree/                   # Stage 9: B+ tree, splits, range scans
     ├── transformer/             # Stage 10: GPT decoder, attention, FFN, softmax
     ├── tcp/                     # Stage 11: 3-way handshake, SYN/ACK/RST/FIN
-    └── kafka/                   # Stage 12: progressive reveal (log→partitions→brokers→failure→consumers)
+    ├── kafka/                   # Stage 12: progressive reveal (log→partitions→brokers→failure→consumers)
+    ├── rate-limiter/            # Stage 13: 5 algorithms (token bucket, sliding window log, fixed window, sliding counter, leaky bucket)
+    └── shazam/                  # Stage 14: audio fingerprinting (spectrogram→peaks→hashing→matching→histogram)
 ```
 
 ## Development Guidelines

@@ -10,6 +10,8 @@ import { BTreeSimulation } from './modules/btree/BTreeSimulation'
 import { TransformerSimulation } from './modules/transformer/TransformerSimulation'
 import { TCPSimulation } from './modules/tcp/TCPSimulation'
 import { KafkaSimulation } from './modules/kafka/KafkaSimulation'
+import { RateLimiterSimulation } from './modules/rate-limiter/RateLimiterSimulation'
+import { ShazamSimulation } from './modules/shazam/ShazamSimulation'
 
 function App() {
   const [currentStageIndex, setCurrentStageIndex] = useState(0)
@@ -91,7 +93,7 @@ function App() {
             fixModes={currentStage.fixModes}
             fixModeIndex={fixModeIndex}
             onAdvanceFix={() => setFixModeIndex(idx => idx + 1)}
-            onSetFixMode={currentStage.moduleType === 'transformer' || currentStage.moduleType === 'tcp' || currentStage.moduleType === 'kafka' ? setFixModeIndex : undefined}
+            onSetFixMode={currentStage.moduleType === 'transformer' || currentStage.moduleType === 'tcp' || currentStage.moduleType === 'kafka' || currentStage.moduleType === 'rate-limiter' || currentStage.moduleType === 'shazam' ? setFixModeIndex : undefined}
           />
         </div>
 
@@ -133,6 +135,10 @@ function App() {
             <TCPSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
           ) : currentStage.moduleType === 'kafka' ? (
             <KafkaSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
+          ) : currentStage.moduleType === 'rate-limiter' ? (
+            <RateLimiterSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
+          ) : currentStage.moduleType === 'shazam' ? (
+            <ShazamSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
           ) : (
             <SystemDiagram
               stage={diagramStage}

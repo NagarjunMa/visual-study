@@ -1,6 +1,6 @@
 # Visual Learning — Interactive System Design, Database & AI Simulator
 
-> See how systems actually work. 12 interactive simulations across 6 tracks — system design, databases, AI, networking, and message brokers. Free, no signup.
+> See how systems actually work. 14 interactive simulations across 8 tracks — system design, databases, AI, networking, message brokers, rate limiting, and audio fingerprinting. Free, no signup.
 
 [![React](https://img.shields.io/badge/React-18-blue.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue.svg)](https://www.typescriptlang.org/)
@@ -11,7 +11,7 @@
 
 Interactive SVG simulations where you **watch, break, and fix** real systems in real time. Not static diagrams. Not videos. Live animated simulations.
 
-### 6 Learning Tracks, 12 Simulations
+### 8 Learning Tracks, 14 Simulations
 
 **System Design (Stages 1-6)** — Particle-based, tick-driven metrics
 - Baseline architecture & scaling limits
@@ -40,6 +40,15 @@ Interactive SVG simulations where you **watch, break, and fix** real systems in 
   3. Broker replication (leader/follower, ISR, acks=1 vs acks=all)
   4. Broker failure & leader election
   5. Consumer group rebalancing
+
+**Rate Limiting (Stage 13)** — 5 algorithms compared
+- **Rate Limiter:** Base crash demo → Token Bucket → Sliding Window Log → Fixed Window (with thundering herd boundary exploit) → Sliding Window Counter → Leaky Bucket
+- Live counters for total / allowed / rejected / queued
+
+**Audio / Signal Processing (Stage 14)** — Shazam algorithm pipeline
+- **Shazam Fingerprinting:** Waveform → STFT spectrogram → constellation map (local maxima peaks) → combinatorial hashing (anchor + target zone, `(f₁, f₂, Δt) → 32-bit hash`) → database lookup → time-offset histogram match
+- 5 fake songs (Electronic Beat, Piano Melody, Rock Guitar, Jazz Trumpet, Pop Vocal)
+- Pure math, no Web Audio API
 
 ## Features
 
@@ -82,10 +91,10 @@ src/
 ├── App.tsx                    # Router: moduleType → simulation component
 ├── simulation/
 │   ├── types.ts               # Core types + moduleType union
-│   ├── stages.ts              # 12 stage configurations across 6 tracks
+│   ├── stages.ts              # 14 stage configurations across 8 tracks
 │   └── engine.ts              # Tick-based simulation (stages 1-6)
 ├── components/
-│   ├── LandingPage.tsx        # 7-section landing page, 6-track folder tree
+│   ├── LandingPage.tsx        # 7-section landing page, 8-track folder tree
 │   ├── InfoCard.tsx           # Sidebar info + fix mode buttons
 │   └── diagram/               # SVG system diagram (stages 1-6)
 └── modules/
@@ -94,7 +103,9 @@ src/
     ├── btree/                 # Stage 9: B+ tree, splits, range scans
     ├── transformer/           # Stage 10: GPT decoder, attention, FFN, softmax
     ├── tcp/                   # Stage 11: 3-way handshake, connection lifecycle
-    └── kafka/                 # Stage 12: progressive reveal message broker
+    ├── kafka/                 # Stage 12: progressive reveal message broker
+    ├── rate-limiter/          # Stage 13: 5 rate-limiting algorithms
+    └── shazam/                # Stage 14: audio fingerprinting pipeline
 ```
 
 ### Tech Stack
@@ -128,7 +139,7 @@ Follow the established pattern:
 
 ## Performance
 
-- **Build:** ~494 KB gzip (~145 KB compressed)
+- **Build:** 456 modules, ~555 KB minified (~160 KB gzip)
 - **Page load:** <1s on 3G
 - **Animations:** 60 FPS, CSS keyframes for scroll effects
 - **Reduced motion:** Full `prefers-reduced-motion` support
@@ -139,8 +150,8 @@ Planned:
 - [ ] Virtual Memory & Page Faults (OS internals)
 - [ ] Raft Consensus (distributed systems)
 - [ ] Event Loop & Task Queues (runtime internals)
-- [ ] Rate Limiting Algorithms (distributed patterns)
 - [ ] Consistent Hashing (sharding)
+- [ ] CRDT / Vector Clocks (conflict-free replication)
 
 ## License
 
