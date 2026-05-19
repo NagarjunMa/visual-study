@@ -19,6 +19,7 @@ const NET_TYPES = new Set(['tcp'])
 const MSG_TYPES = new Set(['kafka'])
 const RL_TYPES = new Set(['rate-limiter'])
 const AUDIO_TYPES = new Set(['shazam'])
+const DIST_TYPES = new Set(['sharding'])
 
 function getTracks(stages: Stage[]): Track[] {
   const sysDesign: number[] = []
@@ -28,6 +29,7 @@ function getTracks(stages: Stage[]): Track[] {
   const messaging: number[] = []
   const rateLimiting: number[] = []
   const audio: number[] = []
+  const distributed: number[] = []
 
   stages.forEach((stage, idx) => {
     if (stage.moduleType === 'transformer') ai.push(idx)
@@ -36,6 +38,7 @@ function getTracks(stages: Stage[]): Track[] {
     else if (stage.moduleType && MSG_TYPES.has(stage.moduleType)) messaging.push(idx)
     else if (stage.moduleType && RL_TYPES.has(stage.moduleType)) rateLimiting.push(idx)
     else if (stage.moduleType && AUDIO_TYPES.has(stage.moduleType)) audio.push(idx)
+    else if (stage.moduleType && DIST_TYPES.has(stage.moduleType)) distributed.push(idx)
     else if (!stage.moduleType) sysDesign.push(idx)
   })
 
@@ -59,6 +62,10 @@ function getTracks(stages: Stage[]): Track[] {
 
   if (audio.length > 0) {
     tracks.push({ name: 'AUDIO / SIGNAL PROCESSING', description: `${audio.length} simulation — audio fingerprinting`, stageIndices: audio })
+  }
+
+  if (distributed.length > 0) {
+    tracks.push({ name: 'DISTRIBUTED DATA', description: `${distributed.length} simulation — sharding vs partitioning side-by-side`, stageIndices: distributed })
   }
 
   return tracks
@@ -179,7 +186,7 @@ export function LandingPage({ stages, currentStageIndex, onLaunch, skipHero }: L
         <div className="hero-content relative z-30 text-center max-w-3xl px-8">
           <div className="boot-sequence mb-10">
             <div className="boot-line animate-boot-appear" style={{ color: 'var(--retro-muted)' }}>&gt; INITIALIZING VISUAL LEARNING ENGINE v2.0...</div>
-            <div className="boot-line animate-boot-appear" style={{ animationDelay: '0.4s', color: 'var(--retro-muted)' }}>&gt; LOADING 10 INTERACTIVE MODULES........... [OK]</div>
+            <div className="boot-line animate-boot-appear" style={{ animationDelay: '0.4s', color: 'var(--retro-muted)' }}>&gt; LOADING 15 INTERACTIVE MODULES........... [OK]</div>
             <div className="boot-line animate-boot-appear" style={{ animationDelay: '0.8s', color: 'var(--retro-muted)' }}>&gt; SPAWNING SIMULATION ENGINE.............. [OK]</div>
             <div className="boot-line animate-boot-appear" style={{ animationDelay: '1.2s', color: 'var(--retro-text)' }}>&gt; READY.</div>
           </div>
@@ -436,11 +443,11 @@ export function LandingPage({ stages, currentStageIndex, onLaunch, skipHero }: L
 
         {/* Stats bar */}
         <div className="mt-12 flex flex-wrap items-center justify-center gap-6 font-mono-clean text-xs px-4" style={{ color: 'var(--retro-muted)' }}>
-          <span>10 SIMULATIONS</span>
+          <span>15 SIMULATIONS</span>
           <span style={{ color: 'var(--retro-border)' }}>·</span>
-          <span>3 LEARNING TRACKS</span>
+          <span>9 LEARNING TRACKS</span>
           <span style={{ color: 'var(--retro-border)' }}>·</span>
-          <span>20+ SCENARIOS</span>
+          <span>30+ SCENARIOS</span>
           <span style={{ color: 'var(--retro-border)' }}>·</span>
           <span>100% FREE</span>
           <span style={{ color: 'var(--retro-border)' }}>·</span>
@@ -531,7 +538,12 @@ export function LandingPage({ stages, currentStageIndex, onLaunch, skipHero }: L
               <div className="space-y-1">
                 <div className="font-mono-clean text-xs" style={{ color: 'var(--retro-muted)' }}>├── System Design (6)</div>
                 <div className="font-mono-clean text-xs" style={{ color: 'var(--retro-muted)' }}>├── Database Internals (3)</div>
-                <div className="font-mono-clean text-xs" style={{ color: 'var(--retro-muted)' }}>└── Transformer / AI (1)</div>
+                <div className="font-mono-clean text-xs" style={{ color: 'var(--retro-muted)' }}>├── Transformer / AI (1)</div>
+                <div className="font-mono-clean text-xs" style={{ color: 'var(--retro-muted)' }}>├── Networking (1)</div>
+                <div className="font-mono-clean text-xs" style={{ color: 'var(--retro-muted)' }}>├── Message Brokers (1)</div>
+                <div className="font-mono-clean text-xs" style={{ color: 'var(--retro-muted)' }}>├── Rate Limiting (1)</div>
+                <div className="font-mono-clean text-xs" style={{ color: 'var(--retro-muted)' }}>├── Audio Signal (1)</div>
+                <div className="font-mono-clean text-xs" style={{ color: 'var(--retro-muted)' }}>└── Distributed Data (1)</div>
               </div>
             </div>
 

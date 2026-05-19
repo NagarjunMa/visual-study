@@ -1,6 +1,6 @@
 # Visual Learning — Interactive System Design, Database & AI Simulator
 
-> See how systems actually work. 14 interactive simulations across 8 tracks — system design, databases, AI, networking, message brokers, rate limiting, and audio fingerprinting. Free, no signup.
+> See how systems actually work. 15 interactive simulations across 9 tracks — system design, databases, AI, networking, message brokers, rate limiting, audio fingerprinting, and distributed data. Free, no signup.
 
 [![React](https://img.shields.io/badge/React-18-blue.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue.svg)](https://www.typescriptlang.org/)
@@ -11,7 +11,7 @@
 
 Interactive SVG simulations where you **watch, break, and fix** real systems in real time. Not static diagrams. Not videos. Live animated simulations.
 
-### 8 Learning Tracks, 14 Simulations
+### 9 Learning Tracks, 15 Simulations
 
 **System Design (Stages 1-6)** — Particle-based, tick-driven metrics
 - Baseline architecture & scaling limits
@@ -49,6 +49,11 @@ Interactive SVG simulations where you **watch, break, and fix** real systems in 
 - **Shazam Fingerprinting:** Waveform → STFT spectrogram → constellation map (local maxima peaks) → combinatorial hashing (anchor + target zone, `(f₁, f₂, Δt) → 32-bit hash`) → database lookup → time-offset histogram match
 - 5 fake songs (Electronic Beat, Piano Melody, Rock Guitar, Jazz Trumpet, Pop Vocal)
 - Pure math, no Web Audio API
+
+**Distributed Data (Stage 15)** — Sharding vs Partitioning side-by-side
+- **Same hash, two architectures:** LEFT = one server with internal partitions, RIGHT = N independent shards behind a router
+- 6 fix modes target one engineering dimension each: write transport (RTT cost), point read, range / scatter-gather, failure blast radius, cross-key transaction (single-node ACID vs 2-Phase Commit), scale wall (1-server saturation vs N-shard flat capacity under load ramp)
+- Per-side metrics: latency, network RTTs, bytes-over-network, ok/fail counters
 
 ## Features
 
@@ -91,10 +96,10 @@ src/
 ├── App.tsx                    # Router: moduleType → simulation component
 ├── simulation/
 │   ├── types.ts               # Core types + moduleType union
-│   ├── stages.ts              # 14 stage configurations across 8 tracks
+│   ├── stages.ts              # 15 stage configurations across 9 tracks
 │   └── engine.ts              # Tick-based simulation (stages 1-6)
 ├── components/
-│   ├── LandingPage.tsx        # 7-section landing page, 8-track folder tree
+│   ├── LandingPage.tsx        # 7-section landing page, 9-track folder tree
 │   ├── InfoCard.tsx           # Sidebar info + fix mode buttons
 │   └── diagram/               # SVG system diagram (stages 1-6)
 └── modules/
@@ -105,7 +110,8 @@ src/
     ├── tcp/                   # Stage 11: 3-way handshake, connection lifecycle
     ├── kafka/                 # Stage 12: progressive reveal message broker
     ├── rate-limiter/          # Stage 13: 5 rate-limiting algorithms
-    └── shazam/                # Stage 14: audio fingerprinting pipeline
+    ├── shazam/                # Stage 14: audio fingerprinting pipeline
+    └── sharding/              # Stage 15: sharding vs partitioning split-screen
 ```
 
 ### Tech Stack
@@ -139,7 +145,7 @@ Follow the established pattern:
 
 ## Performance
 
-- **Build:** 456 modules, ~555 KB minified (~160 KB gzip)
+- **Build:** 458 modules, ~604 KB minified (~172 KB gzip)
 - **Page load:** <1s on 3G
 - **Animations:** 60 FPS, CSS keyframes for scroll effects
 - **Reduced motion:** Full `prefers-reduced-motion` support

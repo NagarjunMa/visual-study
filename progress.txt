@@ -1,10 +1,10 @@
 VISUAL LEARNING - PROGRESS TRACKER
 ===================================
-Updated: 2026-05-14
+Updated: 2026-05-19
 
 === CURRENT STATE ===
-14 stages live, 8 tracks, retro clean UI
-Build: 456 modules, 555 KB / 160 KB gzip
+15 stages live, 9 tracks, retro clean UI
+Build: 458 modules, 604 KB / 172 KB gzip
 
 === COMPLETED PHASES ===
 
@@ -101,6 +101,21 @@ PHASE 11: SHAZAM AUDIO FINGERPRINTING (Stage 14)
 ✓ Query = noisy shifted subset of Rock Guitar (guarantees match demo)
 ✓ Pure math (no Web Audio API): gaussian energy spread, 3×3 local maxima, LCG random
 
+PHASE 12: SHARDING vs PARTITIONING (Stage 15)
+✓ Split-screen side-by-side: LEFT one-server PARTITIONING, RIGHT N-server SHARDING
+✓ Same key set (12 keys), same hash(key) % 4 — different consequences per mode
+✓ Progressive reveal — 6 fix modes target one engineering dimension each:
+  - Base: topology reveal (1 process/disk/failure-domain vs N)
+  - Fix 0: write path — hash & place (function call vs network RTT)
+  - Fix 1: point read — single key (both prune, sharding's best case)
+  - Fix 2: range / scatter — sequential scan vs N-shard fan-out
+  - Fix 3: failure — kill server (total outage) vs kill shard (partial outage)
+  - Fix 4: atomic transfer — single-node ACID vs 2PC (PREPARE→VOTE→COMMIT→ACK, scrolling log)
+  - Fix 5: scale wall — load slider 0-200K rps; LEFT 1-server hockey-stick latency + DISK FULL vs RIGHT 4-shard flat (why sharding wins on capacity)
+✓ Per-side metrics: writes/reads, OK/fail, network RTTs, bytes-over-network, last latency
+✓ Particle interpolation with kind-coded colors; failed particles stall at 40% with X
+✓ Mode-gated controls: insert/auto-insert, point/range inputs, kill/revive nodes, txn trigger, load slider + START RAMP toggle
+
 === BUG FIXES ===
 
 Redis: fixModeIndex sync, AOF doubling, eviction scope, RDB timing
@@ -111,15 +126,15 @@ Rate Limiter: missing useState import
 Shazam: unused rng const in defineSongs
 UI: retro-window opacity blocking in revealed scroll sections
 
-=== PLANNED (Stages 15+) ===
+=== PLANNED (Stages 16+) ===
 
-Stage 15: Virtual Memory & Page Faults — TLB, page table walk, page replacement
-Stage 16: Raft Consensus — leader election, log replication, split brain
-Stage 17: Event Loop & Task Queues — call stack, microtask/macrotask, Promise vs setTimeout
-Stage 18: Consistent Hashing — ring, virtual nodes, rebalancing
-Stage 19: CRDT / Vector Clocks — conflict-free replication, causality
+Stage 16: Virtual Memory & Page Faults — TLB, page table walk, page replacement
+Stage 17: Raft Consensus — leader election, log replication, split brain
+Stage 18: Event Loop & Task Queues — call stack, microtask/macrotask, Promise vs setTimeout
+Stage 19: Consistent Hashing — ring, virtual nodes, rebalancing
+Stage 20: CRDT / Vector Clocks — conflict-free replication, causality
 
 === FILES ===
 
-Modules: 24 files (8 modules × 3 files)
-  src/modules/{redis,lsm,btree,transformer,tcp,kafka,rate-limiter,shazam}/ — types, engine, simulation each
+Modules: 27 files (9 modules × 3 files)
+  src/modules/{redis,lsm,btree,transformer,tcp,kafka,rate-limiter,shazam,sharding}/ — types, engine, simulation each

@@ -2,7 +2,7 @@
 
 ## Project
 
-Interactive learning simulator: 14 stages across 8 tracks. Teaches system design, database internals, LLM inference, networking, message brokers, rate limiting, and audio fingerprinting through real-time SVG visualization.
+Interactive learning simulator: 15 stages across 9 tracks. Teaches system design, database internals, LLM inference, networking, message brokers, rate limiting, audio fingerprinting, and distributed-data trade-offs through real-time SVG visualization.
 
 **Tracks & Stages:**
 - **System Design (1-6):** Distributed system scaling, bottlenecks, caching, replication
@@ -12,8 +12,9 @@ Interactive learning simulator: 14 stages across 8 tracks. Teaches system design
 - **Message Brokers (12):** Kafka — progressive reveal: log → partitions → replication → failure → consumer groups
 - **Rate Limiting (13):** 5 algorithms — Token Bucket, Sliding Window Log, Fixed Window (thundering herd demo), Sliding Window Counter, Leaky Bucket
 - **Audio / Signal Processing (14):** Shazam pipeline — waveform → STFT spectrogram → constellation peaks → combinatorial hashing → time-offset histogram match
+- **Distributed Data (15):** Sharding vs Partitioning side-by-side — same hash, two architectures, 6 modes (writes/point/range/failure/2PC/scale-wall)
 
-**Target:** System design interview prep; database internals learning; AI/ML understanding; networking fundamentals; distributed messaging; rate limiting; audio fingerprinting.
+**Target:** System design interview prep; database internals learning; AI/ML understanding; networking fundamentals; distributed messaging; rate limiting; audio fingerprinting; distributed-data trade-offs.
 
 ## Tech Stack
 
@@ -39,7 +40,7 @@ Interactive learning simulator: 14 stages across 8 tracks. Teaches system design
 
 ### Simulation Engine (`src/simulation/`)
 - `types.ts` - Single source of truth (NodeType, NodeHealth, Metrics, ParticleType, moduleType union)
-- `stages.ts` - 14 stage configurations + fixModes
+- `stages.ts` - 15 stage configurations + fixModes
 - `engine.ts` - `useSimulation` hook: metrics computation, particle spawning (stages 1-6 only)
 
 ### Diagram System (`src/components/diagram/`)
@@ -53,7 +54,7 @@ Interactive learning simulator: 14 stages across 8 tracks. Teaches system design
 - `InfoCard.tsx` - Left sidebar: info cards + fix mode buttons (toggle mode for transformer)
 
 ### Module Pattern (`src/modules/`)
-Each interactive module (stages 7-14) follows:
+Each interactive module (stages 7-15) follows:
 ```
 src/modules/[name]/
 ├── [name].types.ts        # State interfaces, action types
@@ -61,7 +62,7 @@ src/modules/[name]/
 └── [Name]Simulation.tsx   # useReducer + SVG rendering + controls
 ```
 
-## 14-Stage Learning Progression
+## 15-Stage Learning Progression
 
 **System Design (1-6):** Tick-based, particle flow, live metrics HUD.
 
@@ -112,17 +113,23 @@ src/modules/[name]/
 |-------|--------|-------------------|
 | **14** | Shazam | Base: waveform → Spectrogram (STFT grid) → Constellation (peak extraction) → Hashing (anchor+target, (f₁,f₂,Δt)) → Database lookup → Time-offset histogram match |
 
+**Distributed Data (15):** Split-screen comparison — same hash, two architectures, 6 modes target one engineering dimension each.
+
+| Stage | Module | Progressive Modes |
+|-------|--------|-------------------|
+| **15** | Sharding vs Partitioning | Base: topology reveal → Writes: hash & place (RTT cost) → Point read: single-key prune → Range: sequential scan vs scatter-gather → Failure: total outage vs partial → Atomic transfer: single-node ACID vs 2-Phase Commit → Scale wall: load ramp shows 1-server saturation vs N-shard flat capacity |
+
 ## File Structure
 
 ```
 src/
 ├── App.tsx                      # Router: moduleType → component
 ├── simulation/
-│   ├── types.ts                 # moduleType union: btree|lsm|redis-kv|transformer|tcp|kafka|rate-limiter|shazam
-│   ├── stages.ts                # 14 stages across 8 tracks
+│   ├── types.ts                 # moduleType union: btree|lsm|redis-kv|transformer|tcp|kafka|rate-limiter|shazam|sharding
+│   ├── stages.ts                # 15 stages across 9 tracks
 │   └── engine.ts                # useSimulation for stages 1-6
 ├── components/
-│   ├── LandingPage.tsx          # 7-section landing + 8-track folder tree
+│   ├── LandingPage.tsx          # 7-section landing + 9-track folder tree
 │   ├── InfoCard.tsx             # Sidebar content + retro pill fix buttons
 │   └── diagram/                 # Stages 1-6 SVG system
 └── modules/
@@ -133,7 +140,8 @@ src/
     ├── tcp/                     # Stage 11: 3-way handshake, SYN/ACK/RST/FIN
     ├── kafka/                   # Stage 12: progressive reveal (log→partitions→brokers→failure→consumers)
     ├── rate-limiter/            # Stage 13: 5 algorithms (token bucket, sliding window log, fixed window, sliding counter, leaky bucket)
-    └── shazam/                  # Stage 14: audio fingerprinting (spectrogram→peaks→hashing→matching→histogram)
+    ├── shazam/                  # Stage 14: audio fingerprinting (spectrogram→peaks→hashing→matching→histogram)
+    └── sharding/                # Stage 15: sharding vs partitioning split-screen (writes→point→range→failure→2PC→scale-wall)
 ```
 
 ## Development Guidelines

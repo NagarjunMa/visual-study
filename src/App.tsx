@@ -12,6 +12,7 @@ import { TCPSimulation } from './modules/tcp/TCPSimulation'
 import { KafkaSimulation } from './modules/kafka/KafkaSimulation'
 import { RateLimiterSimulation } from './modules/rate-limiter/RateLimiterSimulation'
 import { ShazamSimulation } from './modules/shazam/ShazamSimulation'
+import { ShardingSimulation } from './modules/sharding/ShardingSimulation'
 
 function App() {
   const [currentStageIndex, setCurrentStageIndex] = useState(0)
@@ -93,7 +94,7 @@ function App() {
             fixModes={currentStage.fixModes}
             fixModeIndex={fixModeIndex}
             onAdvanceFix={() => setFixModeIndex(idx => idx + 1)}
-            onSetFixMode={currentStage.moduleType === 'transformer' || currentStage.moduleType === 'tcp' || currentStage.moduleType === 'kafka' || currentStage.moduleType === 'rate-limiter' || currentStage.moduleType === 'shazam' ? setFixModeIndex : undefined}
+            onSetFixMode={currentStage.moduleType === 'transformer' || currentStage.moduleType === 'tcp' || currentStage.moduleType === 'kafka' || currentStage.moduleType === 'rate-limiter' || currentStage.moduleType === 'shazam' || currentStage.moduleType === 'sharding' ? setFixModeIndex : undefined}
           />
         </div>
 
@@ -139,6 +140,8 @@ function App() {
             <RateLimiterSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
           ) : currentStage.moduleType === 'shazam' ? (
             <ShazamSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
+          ) : currentStage.moduleType === 'sharding' ? (
+            <ShardingSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
           ) : (
             <SystemDiagram
               stage={diagramStage}
