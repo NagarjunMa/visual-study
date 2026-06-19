@@ -1,18 +1,25 @@
-import { useState, useEffect } from 'react'
+import { Suspense, lazy, useState, useEffect } from 'react'
 import { stages } from './simulation/stages'
 import { useSimulation } from './simulation/engine'
 import { SystemDiagram } from './components/diagram/SystemDiagram'
 import { LandingPage } from './components/LandingPage'
 import { InfoCard } from './components/InfoCard'
-import { RedisSimulation } from './modules/redis/RedisSimulation'
-import { LSMSimulation } from './modules/lsm/LSMSimulation'
-import { BTreeSimulation } from './modules/btree/BTreeSimulation'
-import { TransformerSimulation } from './modules/transformer/TransformerSimulation'
-import { TCPSimulation } from './modules/tcp/TCPSimulation'
-import { KafkaSimulation } from './modules/kafka/KafkaSimulation'
-import { RateLimiterSimulation } from './modules/rate-limiter/RateLimiterSimulation'
-import { ShazamSimulation } from './modules/shazam/ShazamSimulation'
-import { ShardingSimulation } from './modules/sharding/ShardingSimulation'
+
+const RedisSimulation = lazy(() => import('./modules/redis/RedisSimulation').then(module => ({ default: module.RedisSimulation })))
+const LSMSimulation = lazy(() => import('./modules/lsm/LSMSimulation').then(module => ({ default: module.LSMSimulation })))
+const BTreeSimulation = lazy(() => import('./modules/btree/BTreeSimulation').then(module => ({ default: module.BTreeSimulation })))
+const TransformerSimulation = lazy(() => import('./modules/transformer/TransformerSimulation').then(module => ({ default: module.TransformerSimulation })))
+const TCPSimulation = lazy(() => import('./modules/tcp/TCPSimulation').then(module => ({ default: module.TCPSimulation })))
+const KafkaSimulation = lazy(() => import('./modules/kafka/KafkaSimulation').then(module => ({ default: module.KafkaSimulation })))
+const RateLimiterSimulation = lazy(() => import('./modules/rate-limiter/RateLimiterSimulation').then(module => ({ default: module.RateLimiterSimulation })))
+const ShazamSimulation = lazy(() => import('./modules/shazam/ShazamSimulation').then(module => ({ default: module.ShazamSimulation })))
+const ShardingSimulation = lazy(() => import('./modules/sharding/ShardingSimulation').then(module => ({ default: module.ShardingSimulation })))
+
+const moduleFallback = (
+  <div className="flex h-full items-center justify-center font-mono-clean text-sm" style={{ color: 'var(--retro-muted)', background: 'var(--retro-surface)' }}>
+    Loading simulation...
+  </div>
+)
 
 function App() {
   const [currentStageIndex, setCurrentStageIndex] = useState(0)
@@ -95,6 +102,9 @@ function App() {
             fixModeIndex={fixModeIndex}
             onAdvanceFix={() => setFixModeIndex(idx => idx + 1)}
             onSetFixMode={currentStage.moduleType === 'transformer' || currentStage.moduleType === 'tcp' || currentStage.moduleType === 'kafka' || currentStage.moduleType === 'rate-limiter' || currentStage.moduleType === 'shazam' || currentStage.moduleType === 'sharding' ? setFixModeIndex : undefined}
+            learningObjective={currentStage.learningObjective}
+            misconception={currentStage.misconception}
+            interviewTakeaway={currentStage.interviewTakeaway}
           />
         </div>
 
@@ -124,24 +134,28 @@ function App() {
           )}
 
           {/* Conditional renderer: module vs system design */}
-          {currentStage.moduleType === 'redis-kv' ? (
-            <RedisSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
-          ) : currentStage.moduleType === 'lsm' ? (
-            <LSMSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
-          ) : currentStage.moduleType === 'btree' ? (
-            <BTreeSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
-          ) : currentStage.moduleType === 'transformer' ? (
-            <TransformerSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
-          ) : currentStage.moduleType === 'tcp' ? (
-            <TCPSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
-          ) : currentStage.moduleType === 'kafka' ? (
-            <KafkaSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
-          ) : currentStage.moduleType === 'rate-limiter' ? (
-            <RateLimiterSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
-          ) : currentStage.moduleType === 'shazam' ? (
-            <ShazamSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
-          ) : currentStage.moduleType === 'sharding' ? (
-            <ShardingSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
+          {currentStage.moduleType ? (
+            <Suspense fallback={moduleFallback}>
+              {currentStage.moduleType === 'redis-kv' ? (
+                <RedisSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
+              ) : currentStage.moduleType === 'lsm' ? (
+                <LSMSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
+              ) : currentStage.moduleType === 'btree' ? (
+                <BTreeSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
+              ) : currentStage.moduleType === 'transformer' ? (
+                <TransformerSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
+              ) : currentStage.moduleType === 'tcp' ? (
+                <TCPSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
+              ) : currentStage.moduleType === 'kafka' ? (
+                <KafkaSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
+              ) : currentStage.moduleType === 'rate-limiter' ? (
+                <RateLimiterSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
+              ) : currentStage.moduleType === 'shazam' ? (
+                <ShazamSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
+              ) : (
+                <ShardingSimulation stage={currentStage} fixModeIndex={fixModeIndex} />
+              )}
+            </Suspense>
           ) : (
             <SystemDiagram
               stage={diagramStage}

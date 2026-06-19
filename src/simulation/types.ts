@@ -60,6 +60,13 @@ export interface StageInfoCard {
   howToResolve: string
 }
 
+export interface LearningStep {
+  title: string
+  description: string
+  stateLabel: string
+  outputLabel: string
+}
+
 export interface FixModeConfig {
   nodes: SimNode[]
   edges: SimEdge[]
@@ -71,6 +78,10 @@ export interface FixModeConfig {
   whenHappens?: string     // Overrides infoCard.whenHappens when in this mode
   whatCondition?: string   // Overrides infoCard.whatCondition when in this mode
   howToResolve?: string    // Overrides infoCard.howToResolve when in this mode
+  learningObjective?: string
+  misconception?: string
+  interviewTakeaway?: string
+  steps?: LearningStep[]
 }
 
 export interface Stage {
@@ -82,6 +93,10 @@ export interface Stage {
   description: string
   components: string[]
   infoCard: StageInfoCard
+  learningObjective?: string
+  misconception?: string
+  interviewTakeaway?: string
+  steps?: LearningStep[]
   fixModes?: FixModeConfig[]  // Multiple fix modes for progressive problem solving
   nodes: SimNode[]
   edges: SimEdge[]

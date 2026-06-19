@@ -6,9 +6,21 @@ interface InfoCardProps {
   fixModeIndex: number
   onAdvanceFix: () => void
   onSetFixMode?: (idx: number) => void
+  learningObjective?: string
+  misconception?: string
+  interviewTakeaway?: string
 }
 
-export function InfoCard({ infoCard, fixModes, fixModeIndex, onAdvanceFix, onSetFixMode }: InfoCardProps) {
+export function InfoCard({
+  infoCard,
+  fixModes,
+  fixModeIndex,
+  onAdvanceFix,
+  onSetFixMode,
+  learningObjective: stageLearningObjective,
+  misconception: stageMisconception,
+  interviewTakeaway: stageInterviewTakeaway,
+}: InfoCardProps) {
   const inFixMode = fixModeIndex >= 0 && fixModes
   const activeFix = inFixMode ? fixModes[fixModeIndex] : null
   const hasNextFix = inFixMode && fixModeIndex < fixModes.length - 1
@@ -17,6 +29,9 @@ export function InfoCard({ infoCard, fixModes, fixModeIndex, onAdvanceFix, onSet
   const whenHappens = activeFix?.whenHappens ?? infoCard.whenHappens
   const whatCondition = activeFix?.whatCondition ?? infoCard.whatCondition
   const howToResolve = activeFix?.howToResolve ?? infoCard.howToResolve
+  const learningObjective = activeFix?.learningObjective ?? stageLearningObjective
+  const misconception = activeFix?.misconception ?? stageMisconception
+  const interviewTakeaway = activeFix?.interviewTakeaway ?? stageInterviewTakeaway
 
   return (
     <div className="info-card space-y-3 p-4">
@@ -43,6 +58,27 @@ export function InfoCard({ infoCard, fixModes, fixModeIndex, onAdvanceFix, onSet
         <div className="font-pixel text-xs tracking-widest mb-2" style={{ color: '#4CAF50', fontSize: '7px' }}>HOW TO RESOLVE</div>
         <p className="font-mono-clean text-xs leading-relaxed" style={{ color: 'var(--retro-muted)' }}>{howToResolve}</p>
       </div>
+
+      {learningObjective && (
+        <div className="pt-3" style={{ borderTop: '1px solid var(--retro-border)' }}>
+          <div className="font-pixel text-xs tracking-widest mb-2" style={{ color: 'var(--retro-blue)', fontSize: '7px' }}>LEARNING GOAL</div>
+          <p className="font-mono-clean text-xs leading-relaxed" style={{ color: 'var(--retro-text)' }}>{learningObjective}</p>
+        </div>
+      )}
+
+      {misconception && (
+        <div className="pt-3" style={{ borderTop: '1px solid var(--retro-border)' }}>
+          <div className="font-pixel text-xs tracking-widest mb-2" style={{ color: '#f59e0b', fontSize: '7px' }}>COMMON MISCONCEPTION</div>
+          <p className="font-mono-clean text-xs leading-relaxed" style={{ color: 'var(--retro-muted)' }}>{misconception}</p>
+        </div>
+      )}
+
+      {interviewTakeaway && (
+        <div className="pt-3" style={{ borderTop: '1px solid var(--retro-border)' }}>
+          <div className="font-pixel text-xs tracking-widest mb-2" style={{ color: '#4CAF50', fontSize: '7px' }}>INTERVIEW TAKEAWAY</div>
+          <p className="font-mono-clean text-xs leading-relaxed" style={{ color: 'var(--retro-text)' }}>{interviewTakeaway}</p>
+        </div>
+      )}
 
       {/* Fix Buttons */}
       <div className="pt-4" style={{ borderTop: '1px solid var(--retro-border)' }}>

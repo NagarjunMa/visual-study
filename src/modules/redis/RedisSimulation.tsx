@@ -1,5 +1,6 @@
 import { useState, useReducer, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { LearningModuleShell, type LearningTraceStep } from '../../components/LearningModuleShell'
 import type { Stage } from '../../simulation/types'
 import type { RedisState } from './redis.types'
 import { createInitialRedisState, redisSet, redisGet, redisCrash } from './RedisEngine'
@@ -92,11 +93,54 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
 
   const memoryUsed = state.buckets.reduce((sum, b) => sum + b.entries.length, 0)
   const memoryPct = (memoryUsed / state.capacity) * 100
+  const latestAof = state.aofLog[state.aofLog.length - 1]
+
+  const traceSteps: LearningTraceStep[] = [
+    {
+      title: '1. Hash Key',
+      detail: inputKey.trim() ? `Redis hashes "${inputKey}" to pick one bucket.` : 'SET/GET begins by hashing the key to one bucket.',
+      meta: 'O(1) average lookup',
+      color: '#3b82f6',
+    },
+    {
+      title: '2. Update RAM',
+      detail: `${memoryUsed}/${state.capacity} entries live in memory; LRU tracks recency.`,
+      meta: state.lruHead ? `MRU=${state.lruHead}, LRU=${state.lruTail}` : 'LRU empty',
+      color: '#22c55e',
+    },
+    {
+      title: '3. Persist',
+      detail: state.persistence === 'none' ? 'No disk write is recorded.' : state.persistence === 'rdb' ? 'Snapshots recover only keys captured at snapshot time.' : 'AOF records every write command for replay.',
+      meta: state.persistence === 'aof' ? latestAof ?? 'AOF waiting for writes' : `RDB keys=${state.rdbSnapshot.length}`,
+      color: '#f59e0b',
+    },
+    {
+      title: '4. Recover',
+      detail: state.crashed ? 'Server is down; recovery depends on the persistence mode.' : message || 'Run SET, GET, or CRASH to see the consequence.',
+      meta: state.crashed ? 'crashed=true' : 'online',
+      color: state.crashed ? '#ef4444' : '#22c55e',
+    },
+  ]
+
+  const stateBody = (
+    <div className="space-y-1">
+      <div>Memory: {memoryUsed}/{state.capacity} entries ({memoryPct.toFixed(0)}%)</div>
+      <div>Persistence: {state.persistence.toUpperCase()}</div>
+      <div>RDB snapshot: {state.rdbSnapshot.length} key(s)</div>
+      <div>AOF log: {state.aofLog.length} command(s)</div>
+    </div>
+  )
+
+  const events = [
+    ...(message ? [{ id: 'message', text: message, color: state.crashed ? '#ef4444' : '#f97316' }] : []),
+    ...state.aofLog.slice(-4).map((cmd, i) => ({ id: `aof-${i}-${cmd}`, text: `AOF> ${cmd}`, color: '#22c55e' })),
+    ...state.rdbSnapshot.slice(0, 3).map(entry => ({ id: `rdb-${entry.key}`, text: `RDB ${entry.key}=${entry.value}`, color: '#f59e0b' })),
+  ]
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden relative" style={{ background: '#F0F0E8' }}>
-      {/* SVG Visualization */}
-      <div className="flex-1 flex items-center justify-center overflow-hidden px-4 relative">
+    <LearningModuleShell
+      visual={(
+      <div className="h-full flex items-center justify-center overflow-hidden px-4 relative">
         {/* Crash overlay */}
         {state.crashed && (
           <div className="absolute inset-0 bg-red-900 opacity-20 flex items-center justify-center z-10 pointer-events-none">
@@ -221,33 +265,36 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
           )}
         </svg>
       </div>
-
-      {/* Controls Panel */}
-      <div className="border-t p-4 space-y-3" style={{ background: '#E8E6D8', borderColor: '#B0B09A' }}>
+      )}
+      traceTitle="KEY OPERATION TRACE"
+      traceMeta={message || 'Redis ready'}
+      traceSteps={traceSteps}
+      stateTitle="WHAT REDIS RECORDS"
+      stateBody={stateBody}
+      eventsTitle="OPERATION LOG"
+      events={events.slice(0, 6)}
+      emptyEventText="Run SET, GET, or CRASH to see RAM and persistence state change."
+      latestKey={inputKey.trim() || state.lruHead || undefined}
+      controls={(
+        <>
         {/* Persistence Mode */}
         <div className="flex gap-4 items-center">
           <label className="text-xs font-pixel text-amber-500 uppercase">Persistence:</label>
           <button
             onClick={() => dispatch({ type: 'set-persistence', mode: 'none' })}
-            className={`px-2 py-1 text-xs font-pixel ${
-              state.persistence === 'none' ? 'bg-red-600 text-white' : 'bg-gray-300 text-gray-700'
-            }`}
+            className={`retro-btn text-xs px-3 py-1 ${state.persistence === 'none' ? 'retro-btn--accent' : ''}`}
           >
             None (RAM only)
           </button>
           <button
             onClick={() => dispatch({ type: 'set-persistence', mode: 'rdb' })}
-            className={`px-2 py-1 text-xs font-pixel ${
-              state.persistence === 'rdb' ? 'bg-yellow-600 text-white' : 'bg-gray-300 text-gray-700'
-            }`}
+            className={`retro-btn text-xs px-3 py-1 ${state.persistence === 'rdb' ? 'retro-btn--accent' : ''}`}
           >
             RDB (snapshots)
           </button>
           <button
             onClick={() => dispatch({ type: 'set-persistence', mode: 'aof' })}
-            className={`px-2 py-1 text-xs font-pixel ${
-              state.persistence === 'aof' ? 'bg-green-600 text-white' : 'bg-gray-300 text-gray-700'
-            }`}
+            className={`retro-btn text-xs px-3 py-1 ${state.persistence === 'aof' ? 'retro-btn--accent' : ''}`}
           >
             AOF (full log)
           </button>
@@ -288,14 +335,14 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
           <button
             onClick={handleSet}
             disabled={!inputKey.trim() || !inputValue.trim() || state.crashed}
-            className="px-3 py-1 bg-green-600 text-white text-xs font-pixel rounded disabled:opacity-50"
+            className="retro-btn text-xs px-3 py-1 disabled:opacity-50"
           >
             SET
           </button>
           <button
             onClick={handleGet}
             disabled={!inputKey.trim() || state.crashed}
-            className="px-3 py-1 bg-blue-600 text-white text-xs font-pixel rounded disabled:opacity-50"
+            className="retro-btn text-xs px-3 py-1 disabled:opacity-50"
           >
             GET
           </button>
@@ -309,7 +356,7 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
               dispatch({ type: 'crash' })
               setMessage(`SERVER CRASHED! ${result.recovered.mode}: ${result.recovered.count} keys recovered`)
             }}
-            className="px-3 py-1 bg-red-600 text-white text-xs font-pixel rounded hover:bg-red-700"
+            className="retro-btn retro-btn--accent text-xs px-3 py-1"
           >
             🔴 CRASH
           </button>
@@ -319,7 +366,7 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
                 dispatch({ type: 'restart' })
                 setMessage('Server restarted. All systems online.')
               }}
-              className="px-3 py-1 bg-green-600 text-white text-xs font-pixel rounded hover:bg-green-700"
+              className="retro-btn text-xs px-3 py-1"
             >
               ▶ Restart
             </button>
@@ -329,42 +376,16 @@ export function RedisSimulation({ fixModeIndex }: RedisSimulationProps) {
               dispatch({ type: 'clear' })
               setMessage('Cleared all data')
             }}
-            className="px-3 py-1 bg-gray-400 text-xs font-pixel rounded hover:bg-gray-500" style={{ color: '#2A2A28' }}
+            className="retro-btn text-xs px-3 py-1"
           >
             Clear
           </button>
         </div>
 
-        {/* Persistence State Panel */}
-        <div className="rounded p-2 text-xs font-monospace space-y-1 max-h-32 overflow-auto" style={{ background: '#F0F0E8', color: '#2A2A28' }}>
-          {state.persistence === 'none' && (
-            <div className="text-red-400">
-              💾 Persistence: NONE (RAM only)
-            </div>
-          )}
-          {state.persistence === 'rdb' && (
-            <div className="space-y-1">
-              <div className="text-yellow-400">💾 RDB Snapshots: {state.rdbSnapshot.length} keys</div>
-              {state.rdbSnapshot.length > 0 && (
-                <div className="ml-2" style={{ color: '#7A7A6E' }}>Last: {state.rdbSnapshot.slice(0, 2).map(e => e.key).join(', ')}{state.rdbSnapshot.length > 2 ? '...' : ''}</div>
-              )}
-            </div>
-          )}
-          {state.persistence === 'aof' && (
-            <div className="space-y-1">
-              <div className="text-green-400">📝 AOF Log: {state.aofLog.length} commands</div>
-              {state.aofLog.length > 0 && (
-                <div className="ml-2 max-h-16 overflow-y-auto" style={{ color: '#7A7A6E' }}>
-                  {state.aofLog.slice(-3).map((cmd, i) => (
-                    <div key={i}>&gt; {cmd}</div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+        </>
+      )}
+      minVisualHeight={240}
+    />
   )
 }
 

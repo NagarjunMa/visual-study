@@ -1,5 +1,6 @@
 import { useState, useReducer } from 'react'
 import { motion } from 'framer-motion'
+import { LearningModuleShell, type LearningTraceStep } from '../../components/LearningModuleShell'
 import type { Stage } from '../../simulation/types'
 import type { LSMState } from './lsm.types'
 import { createInitialLSMState, lsmWrite, lsmDelete, lsmGet, lsmFlush, lsmCompact } from './LSMEngine'
@@ -44,7 +45,8 @@ function lsmReducer(state: LSMState, action: LSMAction): LSMState {
   }
 }
 
-export function LSMSimulation({}: LSMSimulationProps) {
+export function LSMSimulation(_props: LSMSimulationProps) {
+  void _props
   const [state, dispatch] = useReducer(lsmReducer, initialState)
   const [inputKey, setInputKey] = useState('')
   const [inputValue, setInputValue] = useState('')
@@ -77,11 +79,34 @@ export function LSMSimulation({}: LSMSimulationProps) {
 
   const memtableUsed = state.memtable.length
   const memtablePct = (memtableUsed / state.memtableCapacity) * 100
+  const l0Count = state.sstables[0].length
+  const l1Count = state.sstables[1]?.length || 0
+  const latestWal = state.wal[state.wal.length - 1]
+  const traceSteps: LearningTraceStep[] = [
+    { title: '1. WAL', detail: 'Every write first appends to the write-ahead log.', meta: latestWal ?? 'waiting for write', color: '#3b82f6' },
+    { title: '2. Memtable', detail: `Sorted in-memory table holds ${memtableUsed}/${state.memtableCapacity} entries.`, meta: memtablePct >= 80 ? 'flush pressure high' : 'accepting writes', color: '#22c55e' },
+    { title: '3. SSTable', detail: `Flush creates immutable L0 files; current L0 count is ${l0Count}.`, meta: `L1 files=${l1Count}`, color: '#f59e0b' },
+    { title: '4. Read / Compact', detail: message || 'GET checks memtable, Bloom filters, then SSTables. Compaction merges files downward.', meta: state.lastOp, color: '#8b5cf6' },
+  ]
+
+  const stateBody = (
+    <div className="space-y-1">
+      <div>WAL entries: {state.wal.length}</div>
+      <div>Memtable: {memtableUsed}/{state.memtableCapacity}</div>
+      <div>L0 SSTables: {l0Count}; L1 SSTables: {l1Count}</div>
+      <div>Next timestamp: {state.nextTimestamp}</div>
+    </div>
+  )
+
+  const events = [
+    ...(message ? [{ id: 'message', text: message, color: '#f97316' }] : []),
+    ...state.wal.slice(-5).map((entry, i) => ({ id: `wal-${i}-${entry}`, text: `WAL> ${entry}`, color: '#94a3b8' })),
+  ]
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden" style={{ background: '#F0F0E8' }}>
-      {/* SVG Visualization */}
-      <div className="flex-1 flex items-center justify-center overflow-hidden px-4">
+    <LearningModuleShell
+      visual={(
+      <div className="h-full flex items-center justify-center overflow-hidden px-4">
         <svg viewBox="0 0 1200 580" preserveAspectRatio="xMidYMid meet" className="max-w-full max-h-full">
           <rect width="1200" height="580" fill="#F0F0E8" />
 
@@ -222,9 +247,18 @@ export function LSMSimulation({}: LSMSimulationProps) {
           )}
         </svg>
       </div>
-
-      {/* Controls */}
-      <div className="border-t p-4 space-y-3" style={{ background: '#E8E6D8', borderColor: '#B0B09A' }}>
+      )}
+      traceTitle="WRITE PATH TRACE"
+      traceMeta={state.lastOp}
+      traceSteps={traceSteps}
+      stateTitle="WHAT THE LSM STORES"
+      stateBody={stateBody}
+      eventsTitle="WAL / OPERATION LOG"
+      events={events.slice(0, 6)}
+      emptyEventText="Run SET, DEL, GET, FLUSH, or COMPACT to see the storage path."
+      latestKey={inputKey.trim() || undefined}
+      controls={(
+        <>
         <div className="flex gap-2 items-end">
           <div className="flex-1">
             <label className="block text-xs text-[#7A7A6E] mb-1">Key</label>
@@ -255,21 +289,21 @@ export function LSMSimulation({}: LSMSimulationProps) {
           <button
             onClick={handleSet}
             disabled={!inputKey.trim() || !inputValue.trim()}
-            className="px-3 py-1 bg-green-600 text-white text-xs font-pixel rounded disabled:opacity-50"
+            className="retro-btn text-xs px-3 py-1 disabled:opacity-50"
           >
             SET
           </button>
           <button
             onClick={handleDelete}
             disabled={!inputKey.trim()}
-            className="px-3 py-1 bg-red-600 text-white text-xs font-pixel rounded disabled:opacity-50"
+            className="retro-btn retro-btn--accent text-xs px-3 py-1 disabled:opacity-50"
           >
             DEL
           </button>
           <button
             onClick={handleGet}
             disabled={!inputKey.trim()}
-            className="px-3 py-1 bg-blue-600 text-white text-xs font-pixel rounded disabled:opacity-50"
+            className="retro-btn text-xs px-3 py-1 disabled:opacity-50"
           >
             GET
           </button>
@@ -282,7 +316,7 @@ export function LSMSimulation({}: LSMSimulationProps) {
               setMessage('Flushed Memtable to L0')
             }}
             disabled={state.memtable.length === 0}
-            className="px-3 py-1 bg-yellow-600 text-white text-xs font-pixel rounded hover:bg-yellow-700 disabled:opacity-50"
+            className="retro-btn text-xs px-3 py-1 disabled:opacity-50"
           >
             FLUSH MEMTABLE
           </button>
@@ -292,7 +326,7 @@ export function LSMSimulation({}: LSMSimulationProps) {
               setMessage('Compacted L0 → L1')
             }}
             disabled={state.sstables[0].length < 2}
-            className="px-3 py-1 bg-purple-600 text-white text-xs font-pixel rounded hover:bg-purple-700 disabled:opacity-50"
+            className="retro-btn text-xs px-3 py-1 disabled:opacity-50"
           >
             COMPACT L0
           </button>
@@ -301,12 +335,14 @@ export function LSMSimulation({}: LSMSimulationProps) {
               dispatch({ type: 'clear' })
               setMessage('Cleared all data')
             }}
-            className="px-3 py-1 bg-gray-600 text-white text-xs font-pixel rounded hover:bg-gray-700"
+            className="retro-btn text-xs px-3 py-1"
           >
             Clear
           </button>
         </div>
-      </div>
-    </div>
+        </>
+      )}
+      minVisualHeight={240}
+    />
   )
 }

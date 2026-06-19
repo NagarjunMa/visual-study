@@ -1,4 +1,5 @@
 import { useReducer, useEffect, useRef, useState, useCallback } from 'react'
+import { LearningModuleShell, type LearningTraceStep } from '../../components/LearningModuleShell'
 import type { Stage } from '../../simulation/types'
 import type { ShardingState, QueryInFlight, Bucket } from './sharding.types'
 import {
@@ -608,10 +609,35 @@ export function ShardingSimulation({ fixModeIndex = -1 }: Props) {
   }
 
   // ─── Render ──────────────────────────────────────────────────────────────
+  const modeLabel = fixModeIndex === -1 ? 'topology' : fixModeIndex === 0 ? 'writes' : fixModeIndex === 1 ? 'point read' : fixModeIndex === 2 ? 'range scan' : fixModeIndex === 3 ? 'failure' : fixModeIndex === 4 ? 'atomic txn' : 'scale wall'
+  const liveInFlight = state.inFlight.filter(q => q.status === 'live').length
+  const failedInFlight = state.inFlight.filter(q => q.status === 'failed').length
+  const traceSteps: LearningTraceStep[] = [
+    { title: '1. Same Hash', detail: 'Both sides use hash(key) mod 4 to choose a bucket.', meta: `next key index=${state.insertCursor}`, color: '#3b82f6' },
+    { title: '2. Placement', detail: 'Partitioning places buckets inside one server; sharding places buckets on separate servers.', meta: `${state.leftPartitions.reduce((sum, p) => sum + p.rows.length, 0)} rows loaded`, color: '#22c55e' },
+    { title: '3. Operation', detail: state.lastOp, meta: `mode=${modeLabel}`, color: '#f59e0b' },
+    { title: '4. Consequence', detail: fixModeIndex === 3 ? 'Failure blast radius differs: one partitioned server fails all data, one shard fails only its bucket.' : fixModeIndex === 5 ? 'Load and disk growth hit one-node limits sooner than horizontally sharded capacity.' : 'Network cost, transaction cost, and scan cost diverge after placement.', meta: `live=${liveInFlight}, failed=${failedInFlight}`, color: failedInFlight > 0 ? '#ef4444' : '#06b6d4' },
+  ]
+  const leftStoragePct = Math.min(100, (state.scaleStorageBytes / LEFT_DISK_CAP_BYTES) * 100)
+  const leftCpu = leftCpuPct(state.scaleLoadRps)
+  const leftLatency = fixModeIndex === 5 ? leftLatencyMs(state.scaleLoadRps, leftStoragePct) : state.metrics.left.lastLatencyMs
+  const leftErrors = fixModeIndex === 5 ? leftErrorPct(state.scaleLoadRps, leftStoragePct) : state.metrics.left.failed
+  const rightCpu = rightShardCpuPct(state.scaleLoadRps)
+  const rightLatency = fixModeIndex === 5 ? rightShardLatencyMs(state.scaleLoadRps) : state.metrics.right.lastLatencyMs
+
+  const stateBody = (
+    <div className="space-y-1">
+      <div>Mode: {modeLabel}</div>
+      <div>Tick: {state.tick}; in-flight: {liveInFlight}</div>
+      <div>Left CPU: {leftCpu.toFixed(0)}%; latency: {leftLatency >= 9999 ? '∞' : `${leftLatency.toFixed(0)}ms`}; failures: {leftErrors}</div>
+      <div>Right avg shard CPU: {rightCpu.toFixed(0)}%; latency: {rightLatency.toFixed(1)}ms</div>
+    </div>
+  )
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden" style={{ background: '#F0F0E8' }}>
-      <div className="flex-1 flex items-center justify-center overflow-hidden px-2">
+    <LearningModuleShell
+      visual={(
+      <div className="h-full flex items-center justify-center overflow-hidden px-2">
         <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} preserveAspectRatio="xMidYMid meet" className="max-w-full max-h-full">
           {renderChrome()}
           {fixModeIndex === 5 ? renderScaleWall() : (
@@ -643,19 +669,33 @@ export function ShardingSimulation({ fixModeIndex = -1 }: Props) {
           )}
         </svg>
       </div>
-
-      {/* Controls */}
-      <div className="border-t p-3" style={{ background: '#E8E6D8', borderColor: '#B0B09A' }}>
-        {renderControls()}
-        <div className="mt-2 flex items-center gap-3 font-mono-clean" style={{ fontSize: '10px', color: '#7A7A6E' }}>
-          <span>tick: {state.tick}</span>
-          <span>·</span>
-          <span>in-flight: {state.inFlight.filter(q => q.status === 'live').length}</span>
-          <span>·</span>
-          <span>mode: {fixModeIndex === -1 ? 'topology' : fixModeIndex === 0 ? 'writes' : fixModeIndex === 1 ? 'point read' : fixModeIndex === 2 ? 'range scan' : fixModeIndex === 3 ? 'failure' : fixModeIndex === 4 ? 'atomic txn' : 'scale wall'}</span>
-        </div>
-      </div>
-    </div>
+      )}
+      traceTitle="DISTRIBUTED DATA TRACE"
+      traceMeta={state.lastOp}
+      traceSteps={traceSteps}
+      stateTitle="WHAT THE SYSTEM RECORDS"
+      stateBody={stateBody}
+      eventsTitle="OPERATION LOG"
+      events={[
+        { id: 'last-op', text: state.lastOp, color: failedInFlight > 0 ? '#ef4444' : '#f97316' },
+        { id: 'metrics', text: `left ok=${state.metrics.left.ok} fail=${state.metrics.left.failed}; right ok=${state.metrics.right.ok} fail=${state.metrics.right.failed}`, color: '#93c5fd' },
+      ]}
+      emptyEventText="Choose a mode and run an operation to compare placement consequences."
+      latestKey={modeLabel}
+      controls={(
+        <>
+          {renderControls()}
+          <div className="flex items-center gap-3 font-mono-clean" style={{ fontSize: '10px', color: '#7A7A6E' }}>
+            <span>tick: {state.tick}</span>
+            <span>·</span>
+            <span>in-flight: {liveInFlight}</span>
+            <span>·</span>
+            <span>mode: {modeLabel}</span>
+          </div>
+        </>
+      )}
+      minVisualHeight={260}
+    />
   )
 
   // ─── Controls panel (mode-gated) ─────────────────────────────────────────

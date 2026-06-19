@@ -109,7 +109,7 @@ function splitLeaf(state: BTreeState, leafId: string): BTreeState {
   const pages = { ...state.pages, [leafId]: leaf, [newPageId]: newLeaf }
   const pushKey = newLeaf.keys[0]
 
-  let newState: BTreeState = {
+  const newState: BTreeState = {
     ...state,
     pages,
     nextPageId: state.nextPageId + 1,
@@ -140,7 +140,7 @@ function pushKeyUp(state: BTreeState, parentId: string, key: number, leftChildId
   parent.children.splice(insertIdx + 1, 0, rightChildId)
 
   const pages = { ...state.pages, [parentId]: parent }
-  let newState: BTreeState = {
+  const newState: BTreeState = {
     ...state,
     pages,
     lastOp: `Pushed key ${key} to ${parentId}`,
@@ -169,7 +169,7 @@ function splitInternal(state: BTreeState, pageId: string): BTreeState {
 
   const pages = { ...state.pages, [pageId]: page, [newPageId]: newPage }
 
-  let newState: BTreeState = {
+  const newState: BTreeState = {
     ...state,
     pages,
     nextPageId: state.nextPageId + 1,

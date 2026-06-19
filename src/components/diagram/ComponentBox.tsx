@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion'
-import type { SimNode, NodeHealth } from '../../simulation/types'
+import type { SimNode, NodeHealth, Metrics } from '../../simulation/types'
 
 interface ComponentBoxProps {
   node: SimNode & { health?: NodeHealth; queueDepth?: number }
-  metrics?: any
+  metrics?: Metrics
   stageId?: string
 }
 
@@ -19,7 +19,7 @@ const typeConfig: Record<string, { color: string; name: string }> = {
   'cache-cluster': { color: '#d97706', name: 'CACHE CLUSTER' },
 }
 
-function getStatusText(node: SimNode, metrics?: any, stageId?: string): string {
+function getStatusText(node: SimNode, metrics?: Metrics, stageId?: string): string {
   if (!metrics) return ''
   switch (node.type) {
     case 'client':

@@ -337,7 +337,7 @@ export function createInitialShazamState(mode: number): ShazamState {
 // ---------------------------------------------------------------------------
 
 export function shazamTick(state: ShazamState): ShazamState {
-  let s = { ...state, tick: state.tick + 1 }
+  const s = { ...state, tick: state.tick + 1 }
 
   // Spectrogram build animation (Fix 0)
   if (s.mode === 0 && s.spectrogramBuilt < TIME_BINS) {

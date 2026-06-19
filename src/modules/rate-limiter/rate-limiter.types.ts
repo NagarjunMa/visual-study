@@ -10,6 +10,13 @@ export interface RateLimitRequest {
   id: number
   timestamp: number
   status: 'allowed' | 'rejected' | 'queued'
+  clientId: string
+  route: string
+  identityKey: string
+  lookup: string
+  rule: string
+  decision: string
+  retryAfter?: number
 }
 
 export interface TokenBucketState {

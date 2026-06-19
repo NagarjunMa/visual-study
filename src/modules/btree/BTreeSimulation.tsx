@@ -1,5 +1,6 @@
 import { useState, useReducer } from 'react'
 import { motion } from 'framer-motion'
+import { LearningModuleShell, type LearningTraceStep } from '../../components/LearningModuleShell'
 import type { Stage } from '../../simulation/types'
 import type { BTreeState } from './btree.types'
 import { createInitialBTreeState, btreeInsert, btreeSearch, btreeRangeScan } from './BTreeEngine'
@@ -91,7 +92,8 @@ function computeLayout(state: BTreeState): Record<string, { x: number; y: number
   return pos
 }
 
-export function BTreeSimulation({}: BTreeSimulationProps) {
+export function BTreeSimulation(_props: BTreeSimulationProps) {
+  void _props
   const [state, dispatch] = useReducer(btreeReducer, initialState)
   const [inputKey, setInputKey] = useState('')
   const [rangeLoInput, setRangeLoInput] = useState('')
@@ -212,10 +214,32 @@ export function BTreeSimulation({}: BTreeSimulationProps) {
 
   const positions = computeLayout(state)
   const allPageIds = Object.keys(state.pages)
+  const leafCount = allPageIds.filter(id => state.pages[id].isLeaf).length
+  const traceSteps: LearningTraceStep[] = [
+    { title: '1. Traverse', detail: 'Start at root and compare separator keys to choose a child pointer.', meta: `height=${state.height}`, color: '#3b82f6' },
+    { title: '2. Leaf Page', detail: 'Search or insert lands in a sorted leaf page with CTID pointers.', meta: `${leafCount} leaf page(s)`, color: '#22c55e' },
+    { title: '3. Split If Full', detail: 'When a page exceeds order 3, split and promote the separator key upward.', meta: state.lastOp, color: '#f59e0b' },
+    { title: '4. Range Scan', detail: message || 'Leaf right-links let ranges move horizontally without returning to the root.', meta: `${state.insertedKeys.length} inserted key(s)`, color: '#06b6d4' },
+  ]
+
+  const stateBody = (
+    <div className="space-y-1">
+      <div>Root page: {state.rootId}</div>
+      <div>Height: {state.height}</div>
+      <div>Pages: {allPageIds.length}; leaves: {leafCount}</div>
+      <div>Inserted keys: {state.insertedKeys.join(', ') || 'none'}</div>
+    </div>
+  )
+
+  const events = [
+    { id: 'last-op', text: state.lastOp, color: '#f97316' },
+    ...(message ? [{ id: 'message', text: message, color: '#3b82f6' }] : []),
+  ]
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden" style={{ background: '#F0F0E8' }}>
-      <div className="flex-1 flex items-center justify-center overflow-hidden px-4">
+    <LearningModuleShell
+      visual={(
+      <div className="h-full flex items-center justify-center overflow-hidden px-4">
         <svg viewBox="0 0 1100 560" preserveAspectRatio="xMidYMid meet" className="max-w-full max-h-full">
           <defs>
             <marker id="arrowgreen" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
@@ -245,9 +269,18 @@ export function BTreeSimulation({}: BTreeSimulationProps) {
           </g>
         </svg>
       </div>
-
-      {/* Controls */}
-      <div className="border-t p-4 space-y-3" style={{ background: '#E8E6D8', borderColor: '#B0B09A' }}>
+      )}
+      traceTitle="INDEX OPERATION TRACE"
+      traceMeta={state.lastOp}
+      traceSteps={traceSteps}
+      stateTitle="WHAT THE B+ TREE STORES"
+      stateBody={stateBody}
+      eventsTitle="TREE EVENT LOG"
+      events={events}
+      emptyEventText="Insert, search, or range scan to see page-level decisions."
+      latestKey={inputKey.trim() || undefined}
+      controls={(
+        <>
         <div className="flex gap-2 items-end">
           <div className="flex-1">
             <label className="block text-xs text-[#7A7A6E] mb-1">Key to Insert</label>
@@ -265,14 +298,14 @@ export function BTreeSimulation({}: BTreeSimulationProps) {
           <button
             onClick={handleInsert}
             disabled={!inputKey.trim()}
-            className="px-3 py-1 bg-green-600 text-white text-xs font-pixel rounded disabled:opacity-50"
+            className="retro-btn text-xs px-3 py-1 disabled:opacity-50"
           >
             INSERT
           </button>
           <button
             onClick={handleSearch}
             disabled={!inputKey.trim()}
-            className="px-3 py-1 bg-blue-600 text-white text-xs font-pixel rounded disabled:opacity-50"
+            className="retro-btn text-xs px-3 py-1 disabled:opacity-50"
           >
             SEARCH
           </button>
@@ -302,7 +335,7 @@ export function BTreeSimulation({}: BTreeSimulationProps) {
           <button
             onClick={handleRangeScan}
             disabled={!rangeLoInput.trim() || !rangeHiInput.trim()}
-            className="px-3 py-1 bg-cyan-600 text-white text-xs font-pixel rounded disabled:opacity-50"
+            className="retro-btn text-xs px-3 py-1 disabled:opacity-50"
           >
             RANGE SCAN
           </button>
@@ -311,12 +344,14 @@ export function BTreeSimulation({}: BTreeSimulationProps) {
               dispatch({ type: 'clear' })
               setMessage('Cleared tree')
             }}
-            className="px-3 py-1 bg-gray-600 text-white text-xs font-pixel rounded hover:bg-gray-700"
+            className="retro-btn text-xs px-3 py-1"
           >
             Clear
           </button>
         </div>
-      </div>
-    </div>
+        </>
+      )}
+      minVisualHeight={240}
+    />
   )
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import type { Stage } from '../simulation/types'
 
 interface LandingPageProps {
@@ -99,7 +99,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'What technologies does this simulator cover?',
-    a: '10 interactive simulations across 3 tracks: distributed systems (load balancing, caching, replication), database internals (Redis KV, Cassandra LSM, PostgreSQL B+ Tree), and AI (GPT-style transformer inference).',
+    a: '15 interactive simulations across 9 tracks: system design, database internals, AI/ML, networking, message brokers, rate limiting, audio fingerprinting, and distributed-data trade-offs.',
   },
 ]
 
@@ -109,7 +109,7 @@ export function LandingPage({ stages, currentStageIndex, onLaunch, skipHero }: L
   const [openTracks, setOpenTracks] = useState<Set<number>>(new Set())
   const [openFaqs, setOpenFaqs] = useState<Set<number>>(new Set())
   const selectorRef = useRef<HTMLDivElement>(null)
-  const tracks = getTracks(stages)
+  const tracks = useMemo(() => getTracks(stages), [stages])
 
   useEffect(() => {
     if (skipHero && selectorRef.current) {
@@ -121,7 +121,7 @@ export function LandingPage({ stages, currentStageIndex, onLaunch, skipHero }: L
         }
       })
     }
-  }, [skipHero])
+  }, [currentStageIndex, skipHero, tracks])
 
   // Shared IntersectionObserver for all scroll-triggered animations
   useEffect(() => {
@@ -551,7 +551,7 @@ export function LandingPage({ stages, currentStageIndex, onLaunch, skipHero }: L
             <div>
               <div className="font-pixel mb-4" style={{ color: 'var(--retro-text)', fontSize: '8px', letterSpacing: '0.1em' }}>BUILT WITH</div>
               <div className="space-y-1">
-                <div className="font-mono-clean text-xs" style={{ color: 'var(--retro-muted)' }}>React 18 · TypeScript</div>
+                <div className="font-mono-clean text-xs" style={{ color: 'var(--retro-muted)' }}>React 19 · TypeScript</div>
                 <div className="font-mono-clean text-xs" style={{ color: 'var(--retro-muted)' }}>Framer Motion · Tailwind CSS</div>
                 <div className="font-mono-clean text-xs" style={{ color: 'var(--retro-muted)' }}>SVG · Vite</div>
               </div>

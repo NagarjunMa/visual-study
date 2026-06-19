@@ -270,8 +270,8 @@ export function insertKey(state: ShardingState, key: number): ShardingState {
   const inFlight = [...state.inFlight]
   const leftAlive = state.leftServerAlive
   const rightAlive = state.rightShards[b].alive
-  let leftMetrics = { ...state.metrics.left }
-  let rightMetrics = { ...state.metrics.right }
+  const leftMetrics = { ...state.metrics.left }
+  const rightMetrics = { ...state.metrics.right }
   let leftPartitions = state.leftPartitions
   let rightShards = state.rightShards
 
@@ -331,8 +331,8 @@ export function pointQuery(state: ShardingState, key: number): ShardingState {
   const b = bucketOf(key)
   let next: ShardingState = { ...state }
   const inFlight = [...state.inFlight]
-  let leftMetrics = { ...state.metrics.left }
-  let rightMetrics = { ...state.metrics.right }
+  const leftMetrics = { ...state.metrics.left }
+  const rightMetrics = { ...state.metrics.right }
 
   // LEFT point read
   if (state.leftServerAlive) {
@@ -373,8 +373,8 @@ export function pointQuery(state: ShardingState, key: number): ShardingState {
 export function rangeQuery(state: ShardingState, lo: number, hi: number): ShardingState {
   let next: ShardingState = { ...state }
   const inFlight = [...state.inFlight]
-  let leftMetrics = { ...state.metrics.left }
-  let rightMetrics = { ...state.metrics.right }
+  const leftMetrics = { ...state.metrics.left }
+  const rightMetrics = { ...state.metrics.right }
 
   // LEFT: sequential scan across partitions (one disk). Stagger spawn times.
   if (state.leftServerAlive) {
@@ -488,7 +488,7 @@ export function startTxn(state: ShardingState, keyA: number, keyB: number): Shar
   let next: ShardingState = { ...state }
 
   // LEFT: trivial single-server transaction. No animation, just log.
-  let leftMetrics = { ...state.metrics.left }
+  const leftMetrics = { ...state.metrics.left }
   if (state.leftServerAlive) {
     leftMetrics.writes += 2
     leftMetrics.ok += 2
@@ -551,9 +551,9 @@ function txnAdvance(state: ShardingState): ShardingState {
   if (justDone.length === 0) return state
 
   let txn = t
-  let inFlight = [...state.inFlight]
-  let rightMetrics = { ...state.metrics.right }
-  let next: ShardingState = state
+  const inFlight = [...state.inFlight]
+  const rightMetrics = { ...state.metrics.right }
+  const next: ShardingState = state
 
   // PREPARE → spawn VOTE back from each shard
   const preparesDone = justDone.filter(q => q.kind === 'txn-prepare')
@@ -664,7 +664,7 @@ export function shardingTick(state: ShardingState): ShardingState {
   const newTick = state.tick + 1
 
   // Mark particles whose time has elapsed as done
-  let inFlight: QueryInFlight[] = state.inFlight.map(q => {
+  const inFlight: QueryInFlight[] = state.inFlight.map(q => {
     if (q.status !== 'live') return q
     if (newTick >= q.startTick + q.durationTicks) {
       return { ...q, status: 'done' }

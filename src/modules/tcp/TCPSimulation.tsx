@@ -1,4 +1,5 @@
 import { useReducer, useRef, useEffect } from 'react'
+import { LearningModuleShell, type LearningTraceStep } from '../../components/LearningModuleShell'
 import type { Stage } from '../../simulation/types'
 import type { TCPConnection } from './tcp.types'
 import {
@@ -174,15 +175,115 @@ export function TCPSimulation({ fixModeIndex = -1 }: TCPSimulationProps) {
     else runNormalHandshake()
   }
 
+  function handleStep() {
+    if (isRunning.current) return
+    startTicks()
+    if (state.clientState === 'CLOSED') {
+      dispatch({ type: 'connect', fixMode: fixModeIndex })
+      return
+    }
+    if (fixModeIndex === 2 && state.established) {
+      dispatch({ type: 'close' })
+      return
+    }
+    if (fixModeIndex === 2 && (state.phase === 'fin-sent' || state.phase === 'fin-ack')) {
+      dispatch({ type: 'close-step' })
+      return
+    }
+    dispatch({ type: 'step', fixMode: fixModeIndex })
+  }
+
   function handleReset() {
     isRunning.current = false
     if (tickRef.current) { clearInterval(tickRef.current); tickRef.current = null }
     dispatch({ type: 'reset' })
   }
 
+  function getTraceSteps(): LearningTraceStep[] {
+    const synDetail = state.clientState === 'CLOSED'
+      ? 'Client has not opened a socket yet.'
+      : `Client sent SYN with seq=${state.clientSeq - 1}.`
+    const serverDetail = state.phase === 'syn-timeout'
+      ? `No SYN-ACK arrived; retry count is ${state.retryCount}/3.`
+      : state.phase === 'rst-received'
+        ? 'Server actively rejected the SYN with RST.'
+        : state.serverState === 'SYN_RECEIVED' || state.established
+          ? `Server answered with SYN-ACK; server seq=${state.serverSeq}.`
+          : 'Server has not accepted the connection yet.'
+    const ackDetail = state.established
+      ? 'Client ACK completed the 3-way handshake. Data may flow.'
+      : 'Client ACK is still pending.'
+    const resultDetail = state.phase === 'time-wait'
+      ? 'Connection is closed; initiator waits in TIME-WAIT for delayed packets.'
+      : state.phase === 'rst-received'
+        ? 'The connection failed fast. Application sees connection refused.'
+        : state.established
+          ? 'Socket is established and can send application data.'
+          : 'Socket is not established yet.'
+
+    return [
+      { title: '1. SYN', detail: synDetail, meta: `client=${state.clientState}`, color: '#3b82f6' },
+      { title: '2. SYN-ACK / RST', detail: serverDetail, meta: `server=${state.serverState}`, color: state.phase === 'rst-received' ? '#ef4444' : '#3b82f6' },
+      { title: '3. ACK', detail: ackDetail, meta: `phase=${state.phase}`, color: state.established ? '#22c55e' : '#f59e0b' },
+      { title: '4. Consequence', detail: resultDetail, meta: state.lastOp, color: state.established ? '#22c55e' : state.phase === 'rst-received' ? '#ef4444' : '#f59e0b' },
+    ]
+  }
+
+  const controls = (
+    <>
+      <button
+        onClick={handleStep}
+        disabled={state.phase === 'time-wait' || state.phase === 'rst-received'}
+        className="retro-btn text-xs px-3 py-1 disabled:opacity-50"
+      >
+        STEP
+      </button>
+      <button
+        onClick={handleConnect}
+        disabled={state.clientState !== 'CLOSED'}
+        className="retro-btn text-xs px-3 py-1 disabled:opacity-50"
+      >
+        AUTO
+      </button>
+
+      {fixModeIndex === 2 || fixModeIndex === -1 ? (
+        <>
+          <button
+            onClick={() => dispatch({ type: 'send-data' })}
+            disabled={!state.established}
+            className="retro-btn text-xs px-3 py-1 disabled:opacity-50"
+          >
+            SEND DATA
+          </button>
+          <button
+            onClick={runCloseSequence}
+            disabled={!state.established}
+            className="retro-btn retro-btn--accent text-xs px-3 py-1 disabled:opacity-50"
+          >
+            CLOSE
+          </button>
+        </>
+      ) : null}
+
+      <button onClick={handleReset} className="retro-btn text-xs px-3 py-1">
+        RESET
+      </button>
+    </>
+  )
+
+  const stateBody = (
+    <div className="space-y-1">
+      <div>Client state: <span style={{ color: stateColor(state.clientState) }}>{state.clientState}</span></div>
+      <div>Server state: <span style={{ color: stateColor(state.serverState) }}>{state.serverState}</span></div>
+      <div>Client seq: {state.clientSeq}; server seq: {state.serverSeq}</div>
+      <div>Retries: {state.retryCount}; data packets: {state.dataPacketsSent}</div>
+    </div>
+  )
+
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden" style={{ background: '#F0F0E8' }}>
-      <div className="flex-1 flex items-center justify-center overflow-hidden px-4">
+    <LearningModuleShell
+      visual={(
+        <div className="flex h-full items-center justify-center overflow-hidden px-4">
         <svg viewBox="0 0 1100 580" preserveAspectRatio="xMidYMid meet" className="max-w-full max-h-full">
           <rect width="1100" height="580" fill="#F0F0E8" />
 
@@ -284,62 +385,23 @@ export function TCPSimulation({ fixModeIndex = -1 }: TCPSimulationProps) {
             {state.lastOp}
           </text>
         </svg>
-      </div>
-
-      {/* Controls */}
-      <div className="border-t p-4 space-y-2" style={{ background: '#E8E6D8', borderColor: '#B0B09A' }}>
-        <div className="flex gap-2 items-center">
-          <button
-            onClick={handleConnect}
-            disabled={state.clientState !== 'CLOSED'}
-            className="px-3 py-1 bg-blue-600 text-white text-xs font-mono rounded disabled:opacity-50 hover:bg-blue-500"
-          >
-            CONNECT (SYN)
-          </button>
-
-          {fixModeIndex === 2 || fixModeIndex === -1 ? (
-            <>
-              <button
-                onClick={() => dispatch({ type: 'send-data' })}
-                disabled={!state.established}
-                className="px-3 py-1 bg-cyan-600 text-white text-xs font-mono rounded disabled:opacity-50 hover:bg-cyan-500"
-              >
-                SEND DATA
-              </button>
-              <button
-                onClick={runCloseSequence}
-                disabled={!state.established}
-                className="px-3 py-1 bg-red-600 text-white text-xs font-mono rounded disabled:opacity-50 hover:bg-red-500"
-              >
-                CLOSE (FIN)
-              </button>
-            </>
-          ) : null}
-
-          <button
-            onClick={handleReset}
-            className="px-3 py-1 text-xs font-mono rounded hover:opacity-80"
-            style={{ background: '#B0B09A', color: '#2A2A28' }}
-          >
-            RESET
-          </button>
         </div>
-
-        <div className="flex items-center gap-4">
-          <span className="text-xs font-mono" style={{ color: '#7A7A6E' }}>
-            Client: <span style={{ color: stateColor(state.clientState) }}>{state.clientState}</span>
-          </span>
-          <span className="text-xs font-mono" style={{ color: '#7A7A6E' }}>
-            Server: <span style={{ color: stateColor(state.serverState) }}>{state.serverState}</span>
-          </span>
-          {state.dataPacketsSent > 0 && (
-            <span className="text-xs font-mono" style={{ color: '#06b6d4' }}>Data: {state.dataPacketsSent} packets</span>
-          )}
-          {state.retryCount > 0 && (
-            <span className="text-xs font-mono" style={{ color: '#f59e0b' }}>Retries: {state.retryCount}</span>
-          )}
-        </div>
-      </div>
-    </div>
+      )}
+      traceTitle="PACKET STATE TRACE"
+      traceMeta={state.lastOp}
+      traceSteps={getTraceSteps()}
+      stateTitle="WHAT TCP RECORDS"
+      stateBody={stateBody}
+      eventsTitle="PACKET LOG"
+      events={state.packets.slice(-6).map(pkt => ({
+        id: pkt.id,
+        text: `${pkt.from.toUpperCase()} -> ${(pkt.from === 'client' ? 'server' : 'client').toUpperCase()} ${pkt.label}`,
+        color: pkt.color,
+      }))}
+      emptyEventText="Step once to send SYN and watch the connection state begin."
+      latestKey={`${state.clientState} -> ${state.serverState}`}
+      controls={controls}
+      minVisualHeight={260}
+    />
   )
 }

@@ -312,7 +312,7 @@ function spawnParticles(
   metrics: Metrics,
   existingParticles: Particle[]
 ): Particle[] {
-  let newParticles = existingParticles.filter(p => {
+  const newParticles = existingParticles.filter(p => {
     const age = tick - p.spawnedAt
     return age < (p.duration / 16) // Remove expired particles
   })

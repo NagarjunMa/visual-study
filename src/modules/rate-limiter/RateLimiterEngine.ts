@@ -32,6 +32,31 @@ function pushRequest(
   return [req, ...list].slice(0, 30)
 }
 
+const DEMO_CLIENT_ID = 'client-203.0.113.42'
+const DEMO_ROUTE = 'GET /api/search'
+
+function createRequest(
+  state: RateLimiterState,
+  status: RateLimitRequest['status'],
+  lookup: string,
+  rule: string,
+  decision: string,
+  retryAfter?: number,
+): RateLimitRequest {
+  return {
+    id: state.totalRequests + 1,
+    timestamp: state.tick,
+    status,
+    clientId: DEMO_CLIENT_ID,
+    route: DEMO_ROUTE,
+    identityKey: `${DEMO_CLIENT_ID}:${DEMO_ROUTE}`,
+    lookup,
+    rule,
+    decision,
+    retryAfter,
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Default sub-states
 // ---------------------------------------------------------------------------
@@ -113,17 +138,23 @@ export function rateLimitProcessRequest(state: RateLimiterState): RateLimiterSta
 
 // --- No rate limiting ---
 function handleNone(state: RateLimiterState): RateLimiterState {
-  const req: RateLimitRequest = { id: state.totalRequests + 1, timestamp: state.tick, status: 'allowed' }
   const server = { ...state.server }
   server.processed++
   // Every request adds CPU load, no protection
   server.cpuPct = Math.min(100, server.cpuPct + 3)
   server.latencyMs = Math.min(9999, server.latencyMs + Math.floor(server.cpuPct / 10))
   if (server.cpuPct >= 100) server.alive = false
+  const req = createRequest(
+    state,
+    'allowed',
+    'No gateway record is checked',
+    'No threshold exists for this caller',
+    server.alive ? 'Forwarded straight to backend' : 'Backend overloaded and crashed',
+  )
 
   const { events, counter } = addEvent(
     state.recentEvents, state.eventCounter,
-    server.alive ? `REQ #${req.id} → server (CPU ${server.cpuPct}%)` : `REQ #${req.id} → SERVER CRASHED!`,
+    server.alive ? `REQ #${req.id} → backend directly (CPU ${server.cpuPct}%)` : `REQ #${req.id} → SERVER CRASHED!`,
     server.cpuPct >= 80 ? '#ef4444' : server.cpuPct >= 50 ? '#f59e0b' : '#22c55e',
   )
 
@@ -142,14 +173,18 @@ function handleNone(state: RateLimiterState): RateLimiterState {
 // --- Token Bucket ---
 function handleTokenBucket(state: RateLimiterState): RateLimiterState {
   const tb = { ...state.tokenBucket }
+  const beforeTokens = tb.tokens
   const allowed = tb.tokens >= 1
   if (allowed) tb.tokens--
 
-  const req: RateLimitRequest = {
-    id: state.totalRequests + 1,
-    timestamp: state.tick,
-    status: allowed ? 'allowed' : 'rejected',
-  }
+  const req = createRequest(
+    state,
+    allowed ? 'allowed' : 'rejected',
+    `Gateway reads bucket for key: ${beforeTokens.toFixed(1)} tokens`,
+    `Need 1 token. Capacity ${tb.capacity}, refill +${tb.refillRate}/tick`,
+    allowed ? `Token consumed, ${tb.tokens.toFixed(1)} left, forward to backend` : 'No token available, return HTTP 429',
+    allowed ? undefined : Math.ceil(1 / tb.refillRate),
+  )
 
   const server = { ...state.server }
   if (allowed) {
@@ -161,8 +196,8 @@ function handleTokenBucket(state: RateLimiterState): RateLimiterState {
   const { events, counter } = addEvent(
     state.recentEvents, state.eventCounter,
     allowed
-      ? `REQ #${req.id} ✓ (${tb.tokens.toFixed(1)} tokens left)`
-      : `REQ #${req.id} ✗ REJECTED (0 tokens)`,
+      ? `REQ #${req.id} ✓ token consumed (${tb.tokens.toFixed(1)} left)`
+      : `REQ #${req.id} ✗ 429 (bucket empty)`,
     allowed ? '#22c55e' : '#ef4444',
   )
 
@@ -186,14 +221,18 @@ function handleSlidingWindowLog(state: RateLimiterState): RateLimiterState {
   // Prune old timestamps
   const cutoff = state.tick - swl.windowSize
   swl.timestamps = swl.timestamps.filter(t => t > cutoff)
-  const allowed = swl.timestamps.length < swl.limit
+  const countBefore = swl.timestamps.length
+  const allowed = countBefore < swl.limit
   if (allowed) swl.timestamps = [...swl.timestamps, state.tick]
 
-  const req: RateLimitRequest = {
-    id: state.totalRequests + 1,
-    timestamp: state.tick,
-    status: allowed ? 'allowed' : 'rejected',
-  }
+  const req = createRequest(
+    state,
+    allowed ? 'allowed' : 'rejected',
+    `Gateway prunes old entries, then finds ${countBefore} timestamps in the active window`,
+    `Allow while count < ${swl.limit} during last ${swl.windowSize} ticks`,
+    allowed ? `Append timestamp t=${state.tick}, then forward` : 'Window is full, return HTTP 429',
+    allowed ? undefined : 1,
+  )
 
   const server = { ...state.server }
   if (allowed) {
@@ -206,7 +245,7 @@ function handleSlidingWindowLog(state: RateLimiterState): RateLimiterState {
     state.recentEvents, state.eventCounter,
     allowed
       ? `REQ #${req.id} ✓ (${swl.timestamps.length}/${swl.limit} in window)`
-      : `REQ #${req.id} ✗ REJECTED (${swl.limit}/${swl.limit} full)`,
+      : `REQ #${req.id} ✗ 429 (${swl.limit}/${swl.limit} full)`,
     allowed ? '#22c55e' : '#ef4444',
   )
 
@@ -237,14 +276,18 @@ function handleFixedWindow(state: RateLimiterState): RateLimiterState {
     fw.count = 0
   }
 
-  fw.count++
-  const allowed = fw.count <= fw.limit
+  const countBefore = fw.count
+  const allowed = countBefore < fw.limit
+  if (allowed) fw.count++
 
-  const req: RateLimitRequest = {
-    id: state.totalRequests + 1,
-    timestamp: state.tick,
-    status: allowed ? 'allowed' : 'rejected',
-  }
+  const req = createRequest(
+    state,
+    allowed ? 'allowed' : 'rejected',
+    `Gateway reads current fixed-window counter: ${countBefore}`,
+    `Allow only while count < ${fw.limit}; rejected requests are not forwarded`,
+    allowed ? `Counter updated to ${fw.count}/${fw.limit}, forward to backend` : `Counter stays ${fw.count}/${fw.limit}, return HTTP 429`,
+    allowed ? undefined : Math.max(1, fw.windowStart + fw.windowSize - state.tick),
+  )
 
   const server = { ...state.server }
   if (allowed) {
@@ -257,7 +300,7 @@ function handleFixedWindow(state: RateLimiterState): RateLimiterState {
     state.recentEvents, state.eventCounter,
     allowed
       ? `REQ #${req.id} ✓ (window count: ${fw.count}/${fw.limit})`
-      : `REQ #${req.id} ✗ REJECTED (${fw.count}/${fw.limit})`,
+      : `REQ #${req.id} ✗ 429 (limit ${fw.count}/${fw.limit})`,
     allowed ? '#22c55e' : '#ef4444',
   )
 
@@ -293,11 +336,14 @@ function handleSlidingWindowCounter(state: RateLimiterState): RateLimiterState {
 
   if (allowed) swc.count++
 
-  const req: RateLimitRequest = {
-    id: state.totalRequests + 1,
-    timestamp: state.tick,
-    status: allowed ? 'allowed' : 'rejected',
-  }
+  const req = createRequest(
+    state,
+    allowed ? 'allowed' : 'rejected',
+    `Gateway reads prev=${swc.prevCount}, current=${swc.count}, elapsed=${(elapsed * 100).toFixed(0)}%`,
+    `Weighted count ${estimated.toFixed(1)} must stay below ${swc.limit}`,
+    allowed ? `Estimated load is safe, increment current window and forward` : 'Estimated load crossed threshold, return HTTP 429',
+    allowed ? undefined : 1,
+  )
 
   const server = { ...state.server }
   if (allowed) {
@@ -310,7 +356,7 @@ function handleSlidingWindowCounter(state: RateLimiterState): RateLimiterState {
     state.recentEvents, state.eventCounter,
     allowed
       ? `REQ #${req.id} ✓ (est: ${estimated.toFixed(1)}/${swc.limit})`
-      : `REQ #${req.id} ✗ (est: ${estimated.toFixed(1)} ≥ ${swc.limit})`,
+      : `REQ #${req.id} ✗ 429 (est: ${estimated.toFixed(1)} ≥ ${swc.limit})`,
     allowed ? '#22c55e' : '#ef4444',
   )
 
@@ -333,13 +379,17 @@ function handleSlidingWindowCounter(state: RateLimiterState): RateLimiterState {
 // --- Leaky Bucket ---
 function handleLeakyBucket(state: RateLimiterState): RateLimiterState {
   const lb = { ...state.leakyBucket }
-  const canQueue = lb.queue.length < lb.capacity
+  const queueBefore = lb.queue.length
+  const canQueue = queueBefore < lb.capacity
 
-  const req: RateLimitRequest = {
-    id: state.totalRequests + 1,
-    timestamp: state.tick,
-    status: canQueue ? 'queued' : 'rejected',
-  }
+  const req = createRequest(
+    state,
+    canQueue ? 'queued' : 'rejected',
+    `Gateway reads queue depth: ${queueBefore}/${lb.capacity}`,
+    `Queue accepts only while depth < ${lb.capacity}; drain is ${lb.drainRate}/tick`,
+    canQueue ? 'Put request in queue; backend receives it when drained' : 'Queue overflow, return HTTP 429',
+    canQueue ? undefined : 1,
+  )
 
   if (canQueue) {
     lb.queue = [...lb.queue, req]
@@ -349,7 +399,7 @@ function handleLeakyBucket(state: RateLimiterState): RateLimiterState {
     state.recentEvents, state.eventCounter,
     canQueue
       ? `REQ #${req.id} queued (${lb.queue.length}/${lb.capacity})`
-      : `REQ #${req.id} ✗ OVERFLOW (queue full: ${lb.capacity})`,
+      : `REQ #${req.id} ✗ 429 overflow (queue full: ${lb.capacity})`,
     canQueue ? '#3b82f6' : '#ef4444',
   )
 
@@ -373,7 +423,7 @@ function handleLeakyBucket(state: RateLimiterState): RateLimiterState {
 // ---------------------------------------------------------------------------
 
 export function rateLimitTick(state: RateLimiterState): RateLimiterState {
-  let s = { ...state, tick: state.tick + 1 }
+  const s = { ...state, tick: state.tick + 1 }
 
   if (s.algorithm === 'none') {
     // Server slowly recovers if alive, but very slowly

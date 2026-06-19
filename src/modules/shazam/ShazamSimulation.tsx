@@ -1,4 +1,5 @@
 import { useState, useReducer, useEffect, useRef, useCallback } from 'react'
+import { LearningModuleShell, type LearningTraceStep } from '../../components/LearningModuleShell'
 import type { Stage } from '../../simulation/types'
 import type { ShazamState } from './shazam.types'
 import {
@@ -66,6 +67,24 @@ export function ShazamSimulation({ fixModeIndex = -1 }: Props) {
   }, [isAuto, fixModeIndex])
 
   const s = state
+  const bestMatch = s.matchResults.length > 0
+    ? s.matchResults.reduce((best, result) => result.maxCount > best.maxCount ? result : best, s.matchResults[0])
+    : null
+  const traceSteps: LearningTraceStep[] = [
+    { title: '1. Signal', detail: 'Raw audio starts as amplitude over time.', meta: fixModeIndex === -1 ? 'visible now' : 'converted downstream', color: '#3b82f6' },
+    { title: '2. Spectrogram', detail: `STFT builds a ${TIME_BINS}x${FREQ_BINS} time-frequency grid.`, meta: `${s.spectrogramBuilt}/${TIME_BINS} columns built`, color: '#22c55e' },
+    { title: '3. Peaks + Hashes', detail: `Local peaks become anchor-target hashes for lookup.`, meta: `${s.peaks.length} peaks, ${s.allHashes.length} hashes`, color: '#f59e0b' },
+    { title: '4. Match', detail: bestMatch ? `${bestMatch.songName} leads with peak count ${bestMatch.maxCount}.` : 'Matching needs repeated hashes with the same time offset.', meta: `lookup ${Math.min(s.currentLookupIdx, s.queryHashes.length)}/${s.queryHashes.length}`, color: '#8b5cf6' },
+  ]
+
+  const stateBody = (
+    <div className="space-y-1">
+      <div>Mode: {fixModeIndex === -1 ? 'waveform' : fixModeIndex === 0 ? 'spectrogram' : fixModeIndex === 1 ? 'constellation' : fixModeIndex === 2 ? 'hashing' : fixModeIndex === 3 ? 'database lookup' : 'time-offset histogram'}</div>
+      <div>Threshold: {s.peakThreshold}; peaks: {s.peaks.length}</div>
+      <div>Hashes: {s.allHashes.length}; query hashes: {s.queryHashes.length}</div>
+      <div>Best match: {bestMatch ? `${bestMatch.songName} (${bestMatch.maxCount})` : 'not enough evidence yet'}</div>
+    </div>
+  )
 
   // Spectrogram grid layout
   const SG_X = 80, SG_Y = 55, CELL_W = 30, CELL_H = 14
@@ -578,31 +597,26 @@ export function ShazamSimulation({ fixModeIndex = -1 }: Props) {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      {/* SVG Canvas */}
-      <div className="flex-1 relative overflow-hidden" style={{ background: fixModeIndex === -1 || fixModeIndex === 4 ? CREAM : '#0f172a' }}>
+    <LearningModuleShell
+      visual={(
+      <div className="h-full relative overflow-hidden" style={{ background: fixModeIndex === -1 || fixModeIndex === 4 ? CREAM : '#0f172a' }}>
         <svg viewBox="0 0 900 340" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
           <rect width="900" height="340" fill={fixModeIndex === -1 ? CREAM : fixModeIndex >= 3 ? CREAM : '#0f172a'} />
           {renderVisualization()}
         </svg>
       </div>
-
-      {/* Event Log */}
-      <div style={{ background: '#1e293b', borderTop: '2px solid #334155', height: '72px', overflowY: 'auto', padding: '4px 10px' }}>
-        {s.recentEvents.slice(0, 5).map(ev => (
-          <div key={ev.id} style={{ color: ev.color, fontSize: '11px', fontFamily: "'VT323', monospace", lineHeight: '13px' }}>
-            {ev.text}
-          </div>
-        ))}
-        {s.recentEvents.length === 0 && (
-          <div style={{ color: MUTED, fontSize: '11px', fontFamily: "'VT323', monospace" }}>
-            {fixModeIndex === -1 ? 'Audio waveform — explore fix modes to see the Shazam pipeline' : 'Press AUTO to animate, or STEP to advance manually'}
-          </div>
-        )}
-      </div>
-
-      {/* Controls */}
-      <div className="flex items-center gap-2 flex-wrap px-3 py-2" style={{ background: CREAM_ALT, borderTop: '1px solid #B0B09A', minHeight: '44px' }}>
+      )}
+      traceTitle="AUDIO FINGERPRINT TRACE"
+      traceMeta={s.lastOp}
+      traceSteps={traceSteps}
+      stateTitle="WHAT SHAZAM RECORDS"
+      stateBody={stateBody}
+      eventsTitle="PIPELINE LOG"
+      events={s.recentEvents.slice(0, 6).map(ev => ({ id: ev.id, text: ev.text, color: ev.color }))}
+      emptyEventText={fixModeIndex === -1 ? 'Audio waveform — explore fix modes to see the Shazam pipeline.' : 'Press AUTO or STEP to advance the pipeline.'}
+      latestKey={bestMatch?.songName}
+      controls={(
+        <>
         {fixModeIndex >= 0 && (
           <>
             <button className={`retro-btn text-xs px-3 py-1 ${isAuto ? 'retro-btn--accent' : ''}`} onClick={toggleAuto}>
@@ -645,7 +659,9 @@ export function ShazamSimulation({ fixModeIndex = -1 }: Props) {
             Lookup: {Math.min(s.currentLookupIdx, s.queryHashes.length)}/{s.queryHashes.length} hashes
           </span>
         )}
-      </div>
-    </div>
+        </>
+      )}
+      minVisualHeight={240}
+    />
   )
 }

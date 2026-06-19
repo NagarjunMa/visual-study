@@ -1,4 +1,5 @@
 import { useState, useReducer, useEffect, useRef, useCallback } from 'react'
+import { LearningModuleShell, type LearningTraceStep } from '../../components/LearningModuleShell'
 import type { Stage } from '../../simulation/types'
 import type { RateLimiterState } from './rate-limiter.types'
 import {
@@ -84,6 +85,66 @@ export function RateLimiterSimulation({ fixModeIndex = -1 }: Props) {
 
   const algo = state.algorithm
   const s = state
+  const latestRequest = s.recentRequests[0]
+
+  function getStoredStateLabel() {
+    if (algo === 'none') return 'Nothing is stored. The backend absorbs every request.'
+    if (algo === 'token-bucket') return `bucket[key] = ${s.tokenBucket.tokens.toFixed(1)} tokens`
+    if (algo === 'sliding-window-log') return `request_log[key] = ${s.slidingWindowLog.timestamps.length} timestamps`
+    if (algo === 'fixed-window') return `counter[key, window] = ${s.fixedWindow.count}`
+    if (algo === 'sliding-window-counter') return `prev=${s.slidingWindowCounter.prevCount}, current=${s.slidingWindowCounter.count}`
+    if (algo === 'leaky-bucket') return `queue[key] = ${s.leakyBucket.queue.length}/${s.leakyBucket.capacity} pending`
+    return ''
+  }
+
+  function getRuleLabel() {
+    if (algo === 'none') return 'No threshold is checked.'
+    if (algo === 'token-bucket') return 'Allow only if at least 1 token exists.'
+    if (algo === 'sliding-window-log') return `Allow fewer than ${s.slidingWindowLog.limit} requests in ${s.slidingWindowLog.windowSize} ticks.`
+    if (algo === 'fixed-window') return `Allow up to ${s.fixedWindow.limit} requests per fixed ${s.fixedWindow.windowSize}-tick window.`
+    if (algo === 'sliding-window-counter') return `Allow while weighted estimate stays below ${s.slidingWindowCounter.limit}.`
+    if (algo === 'leaky-bucket') return `Enqueue while depth is below ${s.leakyBucket.capacity}; drain ${s.leakyBucket.drainRate}/tick.`
+    return ''
+  }
+
+  function getActionColor() {
+    if (!latestRequest) return MUTED
+    if (latestRequest.status === 'allowed') return GREEN
+    if (latestRequest.status === 'queued') return BLUE
+    return RED
+  }
+
+  function getTraceSteps(): LearningTraceStep[] {
+    const actionColor = getActionColor()
+    return [
+      {
+        title: '1. Identify',
+        detail: latestRequest
+          ? `REQ #${latestRequest.id}: ${latestRequest.clientId} calls ${latestRequest.route}`
+          : 'Gateway derives a rate-limit key from IP, user/API key, and route.',
+        meta: latestRequest?.identityKey ?? 'key = caller + route',
+        color: '#4A6FA5',
+      },
+      {
+        title: '2. Lookup',
+        detail: latestRequest?.lookup ?? getStoredStateLabel(),
+        meta: 'Read only this caller/key state',
+        color: BLUE,
+      },
+      {
+        title: '3. Compare',
+        detail: latestRequest?.rule ?? getRuleLabel(),
+        meta: 'This is where the threshold decision happens',
+        color: AMBER,
+      },
+      {
+        title: '4. Act',
+        detail: latestRequest?.decision ?? 'Send a request to see allow, queue, or 429.',
+        meta: latestRequest?.retryAfter ? `Retry-After: ~${latestRequest.retryAfter} tick` : 'Backend only sees accepted traffic',
+        color: actionColor,
+      },
+    ]
+  }
 
   // -----------------------------------------------------------------------
   // SVG Renderers
@@ -155,7 +216,7 @@ export function RateLimiterSimulation({ fixModeIndex = -1 }: Props) {
         {renderArrow(150, 145, 320, 145, s.server.alive ? GREEN : RED)}
         {/* Direct connection — no limiter box */}
         <text x={235} y={135} textAnchor="middle" fill={s.server.cpuPct >= 80 ? RED : MUTED} fontSize="9" fontFamily="'Space Mono', monospace">
-          {s.server.cpuPct >= 80 ? 'OVERLOADED!' : 'no limiter'}
+          {s.server.cpuPct >= 80 ? 'OVERLOADED!' : 'no monitoring'}
         </text>
         {renderServer(320, 100)}
 
@@ -182,8 +243,8 @@ export function RateLimiterSimulation({ fixModeIndex = -1 }: Props) {
 
     return (
       <g>
-        <text x={450} y={25} textAnchor="middle" fill={CORAL} fontSize="9" fontFamily="'Press Start 2P', monospace">TOKEN BUCKET</text>
-        <text x={450} y={42} textAnchor="middle" fill={MUTED} fontSize="10" fontFamily="'Space Mono', monospace">Tokens refill over time. Each request costs 1 token.</text>
+        <text x={450} y={25} textAnchor="middle" fill={CORAL} fontSize="9" fontFamily="'Press Start 2P', monospace">API GATEWAY: TOKEN BUCKET</text>
+        <text x={450} y={42} textAnchor="middle" fill={MUTED} fontSize="10" fontFamily="'Space Mono', monospace">Identify key → read bucket → spend token or return 429.</text>
 
         {renderClient(30, 100)}
         {renderArrow(150, 145, 245, 145, BLUE)}
@@ -242,8 +303,8 @@ export function RateLimiterSimulation({ fixModeIndex = -1 }: Props) {
 
     return (
       <g>
-        <text x={450} y={25} textAnchor="middle" fill={CORAL} fontSize="9" fontFamily="'Press Start 2P', monospace">SLIDING WINDOW LOG</text>
-        <text x={450} y={42} textAnchor="middle" fill={MUTED} fontSize="10" fontFamily="'Space Mono', monospace">Store every timestamp. Count requests in sliding window.</text>
+        <text x={450} y={25} textAnchor="middle" fill={CORAL} fontSize="9" fontFamily="'Press Start 2P', monospace">API GATEWAY: SLIDING WINDOW LOG</text>
+        <text x={450} y={42} textAnchor="middle" fill={MUTED} fontSize="10" fontFamily="'Space Mono', monospace">Read this key's timestamps, prune old ones, then count.</text>
 
         {renderClient(20, 170)}
         {renderServer(740, 170)}
@@ -311,8 +372,8 @@ export function RateLimiterSimulation({ fixModeIndex = -1 }: Props) {
 
     return (
       <g>
-        <text x={450} y={25} textAnchor="middle" fill={CORAL} fontSize="9" fontFamily="'Press Start 2P', monospace">FIXED WINDOW COUNTER</text>
-        <text x={450} y={42} textAnchor="middle" fill={MUTED} fontSize="10" fontFamily="'Space Mono', monospace">Counter per window. Resets at boundary. Exploitable!</text>
+        <text x={450} y={25} textAnchor="middle" fill={CORAL} fontSize="9" fontFamily="'Press Start 2P', monospace">API GATEWAY: FIXED WINDOW COUNTER</text>
+        <text x={450} y={42} textAnchor="middle" fill={MUTED} fontSize="10" fontFamily="'Space Mono', monospace">Read one counter for this time box, then increment.</text>
 
         {renderClient(20, 170)}
         {renderServer(740, 170)}
@@ -373,8 +434,8 @@ export function RateLimiterSimulation({ fixModeIndex = -1 }: Props) {
 
     return (
       <g>
-        <text x={450} y={20} textAnchor="middle" fill={CORAL} fontSize="9" fontFamily="'Press Start 2P', monospace">SLIDING WINDOW COUNTER</text>
-        <text x={450} y={37} textAnchor="middle" fill={MUTED} fontSize="10" fontFamily="'Space Mono', monospace">Weighted formula smooths boundary problem</text>
+        <text x={450} y={20} textAnchor="middle" fill={CORAL} fontSize="9" fontFamily="'Press Start 2P', monospace">API GATEWAY: SLIDING WINDOW COUNTER</text>
+        <text x={450} y={37} textAnchor="middle" fill={MUTED} fontSize="10" fontFamily="'Space Mono', monospace">Estimate this key's live load from previous + current counters.</text>
 
         {renderClient(15, 170)}
         {renderServer(745, 170)}
@@ -425,8 +486,8 @@ export function RateLimiterSimulation({ fixModeIndex = -1 }: Props) {
 
     return (
       <g>
-        <text x={450} y={20} textAnchor="middle" fill={CORAL} fontSize="9" fontFamily="'Press Start 2P', monospace">LEAKY BUCKET</text>
-        <text x={450} y={37} textAnchor="middle" fill={MUTED} fontSize="10" fontFamily="'Space Mono', monospace">Queue drains at constant rate. Overflow = reject.</text>
+        <text x={450} y={20} textAnchor="middle" fill={CORAL} fontSize="9" fontFamily="'Press Start 2P', monospace">API GATEWAY: LEAKY BUCKET</text>
+        <text x={450} y={37} textAnchor="middle" fill={MUTED} fontSize="10" fontFamily="'Space Mono', monospace">Queue this key's requests, drain steadily, reject overflow.</text>
 
         {renderClient(30, 120)}
         {renderServer(670, 120)}
@@ -506,38 +567,14 @@ export function RateLimiterSimulation({ fixModeIndex = -1 }: Props) {
     return null
   }
 
-  return (
-    <div className="flex flex-col h-full">
-      {/* SVG Canvas */}
-      <div className="flex-1 relative overflow-hidden" style={{ background: CREAM }}>
-        <svg viewBox="0 0 900 340" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
-          <rect width="900" height="340" fill={CREAM} />
-          {renderVisualization()}
-        </svg>
-      </div>
-
-      {/* Event Log */}
-      <div style={{ background: '#1e293b', borderTop: '2px solid #334155', height: '80px', overflowY: 'auto', padding: '4px 10px' }}>
-        {s.recentEvents.slice(0, 6).map(ev => (
-          <div key={ev.id} style={{ color: ev.color, fontSize: '11px', fontFamily: "'VT323', monospace", lineHeight: '13px' }}>
-            {ev.text}
-          </div>
-        ))}
-        {s.recentEvents.length === 0 && (
-          <div style={{ color: MUTED, fontSize: '11px', fontFamily: "'VT323', monospace" }}>
-            {algo === 'none' ? 'Send requests to see server degrade...' : `${algo} ready — send requests to test`}
-          </div>
-        )}
-      </div>
-
-      {/* Controls */}
-      <div className="flex items-center gap-2 flex-wrap px-3 py-2" style={{ background: CREAM_ALT, borderTop: `1px solid #B0B09A`, minHeight: '48px' }}>
+  const controls = (
+    <>
         <button
           className="retro-btn text-xs px-3 py-1"
           onClick={() => dispatch({ type: 'send-request' })}
           disabled={algo === 'none' && !s.server.alive}
         >
-          SEND
+          STEP
         </button>
         <button
           className={`retro-btn text-xs px-3 py-1 ${autoSending ? 'retro-btn--accent' : ''}`}
@@ -631,7 +668,28 @@ export function RateLimiterSimulation({ fixModeIndex = -1 }: Props) {
             <span className="text-xs font-mono" style={{ color: '#333' }}>{s.leakyBucket.drainRate}/t</span>
           </>
         )}
-      </div>
-    </div>
+    </>
+  )
+
+  return (
+    <LearningModuleShell
+      visual={(
+        <svg viewBox="0 0 900 340" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+          <rect width="900" height="340" fill={CREAM} />
+          {renderVisualization()}
+        </svg>
+      )}
+      traceTitle="REQUEST DECISION TRACE"
+      traceMeta={`limiter state: ${getStoredStateLabel()}`}
+      traceSteps={getTraceSteps()}
+      stateTitle="WHAT IS MONITORED"
+      stateBody="A limiter does not judge a random request in isolation. It records a small state bucket per key, then updates only that key when the next matching API call arrives."
+      eventsTitle="REQUEST DISPLAY"
+      events={s.recentEvents.slice(0, 5).map(ev => ({ id: ev.id, text: ev.text, color: ev.color }))}
+      emptyEventText={algo === 'none' ? 'Step requests to see the server degrade...' : `${algo} ready. Step requests to watch the gateway decision.`}
+      latestKey={latestRequest?.identityKey}
+      controls={controls}
+      minVisualHeight={220}
+    />
   )
 }

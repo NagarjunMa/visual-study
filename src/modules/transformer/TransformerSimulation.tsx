@@ -1,5 +1,6 @@
 import { useState, useReducer, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { LearningModuleShell, type LearningTraceStep } from '../../components/LearningModuleShell'
 import type { Stage } from '../../simulation/types'
 import type { TransformerState, TransformerPhase } from './transformer.types'
 import {
@@ -746,11 +747,27 @@ export function TransformerSimulation({ fixModeIndex = -1 }: TransformerSimulati
   }
 
   const phaseLabel = PHASE_LABELS[state.phase] ?? state.phase
+  const topPrediction = state.topPredictions[0]
+  const traceSteps: LearningTraceStep[] = [
+    { title: '1. Tokenize', detail: `"${FIXED_INPUT}" becomes ${state.tokens.length || tokenize(FIXED_INPUT).length} token ids.`, meta: state.tokens.join(', ') || 'run forward to populate tokens', color: '#3b82f6' },
+    { title: '2. Embed', detail: `Each token maps into a ${DIM}-dimensional vector plus position signal.`, meta: `${state.embeddings.length} embedding vector(s)`, color: '#22c55e' },
+    { title: '3. Layers', detail: `${NUM_HEADS} attention heads mix context, then FFN expands to ${FFN_DIM} dims and projects back.`, meta: phaseLabel, color: '#f59e0b' },
+    { title: '4. Predict', detail: topPrediction ? `Top token is "${topPrediction.token}" at ${(topPrediction.probability * 100).toFixed(1)}%.` : 'Unembedding + softmax will produce next-token probabilities.', meta: `temperature=${state.temperature.toFixed(1)}`, color: '#8b5cf6' },
+  ]
+
+  const stateBody = (
+    <div className="space-y-1">
+      <div>Phase: {phaseLabel}</div>
+      <div>Model dims: vocab={VOCAB_SIZE}, d_model={DIM}, heads={NUM_HEADS}</div>
+      <div>Temperature: {state.temperature.toFixed(1)}</div>
+      <div>Top prediction: {topPrediction ? `"${topPrediction.token}"` : 'not computed yet'}</div>
+    </div>
+  )
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden" style={{ background: '#F0F0E8' }}>
-      {/* Visualization */}
-      <div className="flex-1 flex items-center justify-center overflow-hidden px-4">
+    <LearningModuleShell
+      visual={(
+      <div className="h-full flex items-center justify-center overflow-hidden px-4">
         <AnimatePresence mode="wait">
           <motion.div
             key={fixModeIndex}
@@ -764,9 +781,21 @@ export function TransformerSimulation({ fixModeIndex = -1 }: TransformerSimulati
           </motion.div>
         </AnimatePresence>
       </div>
-
-      {/* Controls */}
-      <div className="border-t p-4 space-y-2" style={{ background: '#E8E6D8', borderColor: '#B0B09A' }}>
+      )}
+      traceTitle="FORWARD PASS TRACE"
+      traceMeta={state.lastOp}
+      traceSteps={traceSteps}
+      stateTitle="WHAT THE MODEL COMPUTES"
+      stateBody={stateBody}
+      eventsTitle="PREDICTION LOG"
+      events={[
+        { id: 'last-op', text: state.lastOp, color: '#f97316' },
+        ...state.topPredictions.slice(0, 4).map((pred, i) => ({ id: `${pred.token}-${i}`, text: `${i + 1}. ${pred.token} ${(pred.probability * 100).toFixed(2)}%`, color: i === 0 ? '#f59e0b' : '#93c5fd' })),
+      ]}
+      emptyEventText="Run the forward pass to produce logits and probabilities."
+      latestKey={topPrediction?.token}
+      controls={(
+        <>
         {/* Phase indicator */}
         {state.phase !== 'idle' && (
           <div className="flex items-center gap-2">
@@ -788,14 +817,14 @@ export function TransformerSimulation({ fixModeIndex = -1 }: TransformerSimulati
 
           <button
             onClick={runAnimatedForward}
-            className="px-3 py-1 bg-amber-600 text-white text-xs font-mono rounded hover:bg-amber-500"
+            className="retro-btn text-xs px-3 py-1"
           >
             RUN FORWARD
           </button>
 
           <button
             onClick={() => dispatch({ type: 'reset' })}
-            className="px-3 py-1 bg-gray-600 text-white text-xs font-mono rounded hover:bg-gray-700"
+            className="retro-btn text-xs px-3 py-1"
           >
             RESET
           </button>
@@ -815,7 +844,9 @@ export function TransformerSimulation({ fixModeIndex = -1 }: TransformerSimulati
             {state.temperature < 0.7 ? '→ deterministic' : state.temperature > 1.3 ? '→ random' : '→ balanced'}
           </span>
         </div>
-      </div>
-    </div>
+        </>
+      )}
+      minVisualHeight={260}
+    />
   )
 }

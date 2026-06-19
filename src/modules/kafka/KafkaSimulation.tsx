@@ -1,4 +1,5 @@
 import { useState, useReducer, useEffect, useRef, useCallback } from 'react'
+import { LearningModuleShell, type LearningTraceStep } from '../../components/LearningModuleShell'
 import type { Stage } from '../../simulation/types'
 import type { KafkaState } from './kafka.types'
 import {
@@ -52,8 +53,14 @@ export function KafkaSimulation({ fixModeIndex = -1 }: Props) {
   const consRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const counter = useRef(0)
 
-  useEffect(() => { stopAll(); dispatch({ type: 'init', mode: fixModeIndex }); counter.current = 0 }, [fixModeIndex])
-  useEffect(() => () => stopAll(), [])
+  const stopAll = useCallback(() => {
+    if (prodRef.current) { clearInterval(prodRef.current); prodRef.current = null }
+    if (consRef.current) { clearInterval(consRef.current); consRef.current = null }
+    setAutoProducing(false); setAutoConsuming(false)
+  }, [])
+
+  useEffect(() => { stopAll(); dispatch({ type: 'init', mode: fixModeIndex }); counter.current = 0 }, [fixModeIndex, stopAll])
+  useEffect(() => () => stopAll(), [stopAll])
 
   useEffect(() => {
     if (state.pendingHwm) {
@@ -68,12 +75,6 @@ export function KafkaSimulation({ fixModeIndex = -1 }: Props) {
       return () => clearTimeout(t)
     }
   }, [state.consumerGroups])
-
-  const stopAll = useCallback(() => {
-    if (prodRef.current) { clearInterval(prodRef.current); prodRef.current = null }
-    if (consRef.current) { clearInterval(consRef.current); consRef.current = null }
-    setAutoProducing(false); setAutoConsuming(false)
-  }, [])
 
   function toggleAutoProd() {
     if (autoProducing) { clearInterval(prodRef.current!); prodRef.current = null; setAutoProducing(false) }
@@ -95,6 +96,39 @@ export function KafkaSimulation({ fixModeIndex = -1 }: Props) {
   const group = state.consumerGroups[0]
   const partCount = state.partitions.length
   const preview = inputKey ? getPartitionForKey(inputKey, partCount) : -1
+  const totalLag = state.partitions.reduce((sum, p) => sum + Math.max(0, p.hwm - (group.offsets[p.id] ?? 0)), 0)
+
+  function getTraceSteps(): LearningTraceStep[] {
+    const target = preview >= 0 ? `P${preview}` : 'choose a key'
+    const partition = preview >= 0 ? state.partitions[preview] : undefined
+    const leader = partition ? `broker ${partition.leaderId}` : 'leader unknown'
+    return [
+      {
+        title: '1. Produce',
+        detail: `Message key="${inputKey || 'empty'}", value="${inputValue || 'empty'}" enters the producer.`,
+        meta: `sent=${state.messageCounter}`,
+        color: '#d97706',
+      },
+      {
+        title: '2. Route',
+        detail: partCount > 1 ? `Hash the key, then route to ${target}.` : 'Single-log mode sends every message to partition 0.',
+        meta: partCount > 1 ? `hash(key) % ${partCount} = ${target}` : 'one topic log',
+        color: '#3b82f6',
+      },
+      {
+        title: '3. Append',
+        detail: partition ? `Leader ${leader} appends at LEO ${partition.leo}; HWM is ${partition.hwm}.` : 'The log appends messages in offset order.',
+        meta: state.acksMode === 'acks-all' ? 'acks=all waits for ISR before commit' : 'acks=1 returns after leader append',
+        color: '#f59e0b',
+      },
+      {
+        title: '4. Consume',
+        detail: `Consumers read by offset; total lag is ${totalLag}.`,
+        meta: group.isRebalancing ? 'group paused during rebalance' : `members=${group.consumers.length}`,
+        color: '#047857',
+      },
+    ]
+  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // RENDER: Base mode — simple log
@@ -396,15 +430,8 @@ export function KafkaSimulation({ fixModeIndex = -1 }: Props) {
     return renderBrokers()
   }
 
-  return (
-    <div className="w-full h-full flex flex-col overflow-hidden" style={{ background: '#F0F0E8' }}>
-      <div className="flex-1 flex items-center justify-center overflow-hidden px-2">
-        {renderVisualization()}
-      </div>
-
-      {/* Controls */}
-      <div className="border-t p-3" style={{ background: '#E8E6D8', borderColor: '#B0B09A' }}>
-        <div className="flex gap-2 items-end flex-wrap">
+  const controls = (
+    <>
           <div className="flex gap-1 items-end">
             <div>
               <label className="block font-mono" style={{ color: '#7A7A6E', fontSize: '8px' }}>Key</label>
@@ -419,29 +446,26 @@ export function KafkaSimulation({ fixModeIndex = -1 }: Props) {
                 style={{ background: '#F0F0E8', border: '1px solid #B0B09A', color: '#2A2A28' }} />
             </div>
             <button onClick={() => dispatch({ type: 'produce', key: inputKey, value: inputValue })}
-              disabled={!inputKey} className="px-2 py-1 bg-blue-600 text-white text-xs font-mono rounded disabled:opacity-50">PRODUCE</button>
+              disabled={!inputKey} className="retro-btn text-xs px-3 py-1 disabled:opacity-50">STEP</button>
           </div>
 
-          <button onClick={toggleAutoProd} className={`px-2 py-1 text-xs font-mono rounded ${autoProducing ? 'bg-red-600 text-white' : 'bg-green-700 text-white'}`}>
-            {autoProducing ? '⏸ STOP' : '▶ AUTO'}
+          <button onClick={toggleAutoProd} className={`retro-btn text-xs px-3 py-1 ${autoProducing ? 'retro-btn--accent' : ''}`}>
+            {autoProducing ? 'STOP' : 'AUTO'}
           </button>
 
-          <button onClick={() => dispatch({ type: 'consume' })} className="px-2 py-1 text-xs font-mono rounded" style={{ background: '#047857', color: 'white' }}>CONSUME</button>
+          <button onClick={() => dispatch({ type: 'consume' })} className="retro-btn text-xs px-3 py-1">CONSUME</button>
 
-          <button onClick={toggleAutoCons} className={`px-2 py-1 text-xs font-mono rounded ${autoConsuming ? 'bg-red-600 text-white' : ''}`}
-            style={!autoConsuming ? { background: '#059669', color: 'white' } : {}}>
-            {autoConsuming ? '⏸ STOP' : '▶ AUTO'}
+          <button onClick={toggleAutoCons} className={`retro-btn text-xs px-3 py-1 ${autoConsuming ? 'retro-btn--accent' : ''}`}>
+            {autoConsuming ? 'STOP C' : 'AUTO C'}
           </button>
 
           {/* Mode-specific controls */}
           {fixModeIndex >= 1 && (
             <div className="flex gap-1">
               <button onClick={() => dispatch({ type: 'set-acks', mode: 'acks-1' })}
-                className={`px-2 py-1 text-xs font-mono rounded ${state.acksMode === 'acks-1' ? 'bg-amber-600 text-white' : ''}`}
-                style={state.acksMode !== 'acks-1' ? { background: '#B0B09A', color: '#2A2A28' } : {}}>acks=1</button>
+                className={`retro-btn text-xs px-3 py-1 ${state.acksMode === 'acks-1' ? 'retro-btn--accent' : ''}`}>acks=1</button>
               <button onClick={() => dispatch({ type: 'set-acks', mode: 'acks-all' })}
-                className={`px-2 py-1 text-xs font-mono rounded ${state.acksMode === 'acks-all' ? 'bg-green-700 text-white' : ''}`}
-                style={state.acksMode !== 'acks-all' ? { background: '#B0B09A', color: '#2A2A28' } : {}}>acks=all</button>
+                className={`retro-btn text-xs px-3 py-1 ${state.acksMode === 'acks-all' ? 'retro-btn--accent' : ''}`}>acks=all</button>
             </div>
           )}
 
@@ -449,7 +473,7 @@ export function KafkaSimulation({ fixModeIndex = -1 }: Props) {
             <div className="flex gap-1">
               {state.brokers.map(b => (
                 <button key={b.id} onClick={() => dispatch({ type: b.alive ? 'kill-broker' : 'resurrect-broker', brokerId: b.id })}
-                  className={`px-2 py-1 text-xs font-mono rounded ${b.alive ? 'bg-red-600 text-white' : 'bg-green-700 text-white'}`}>
+                  className={`retro-btn text-xs px-3 py-1 ${b.alive ? 'retro-btn--accent' : ''}`}>
                   {b.alive ? `KILL B${b.id}` : `REVIVE B${b.id}`}
                 </button>
               ))}
@@ -459,18 +483,42 @@ export function KafkaSimulation({ fixModeIndex = -1 }: Props) {
           {fixModeIndex >= 3 && (
             <div className="flex gap-1">
               <button onClick={() => dispatch({ type: 'add-consumer' })} disabled={group.consumers.length >= PARTITION_COUNT}
-                className="px-2 py-1 text-xs font-mono rounded bg-purple-600 text-white disabled:opacity-50">+C</button>
+                className="retro-btn text-xs px-3 py-1 disabled:opacity-50">+C</button>
               {group.consumers.length > 1 && (
                 <button onClick={() => dispatch({ type: 'remove-consumer', consumerId: group.consumers[group.consumers.length - 1].id })}
-                  className="px-2 py-1 text-xs font-mono rounded bg-red-600 text-white">-C</button>
+                  className="retro-btn retro-btn--accent text-xs px-3 py-1">-C</button>
               )}
             </div>
           )}
 
           <button onClick={() => { stopAll(); dispatch({ type: 'init', mode: fixModeIndex }) }}
-            className="px-2 py-1 text-xs font-mono rounded" style={{ background: '#B0B09A', color: '#2A2A28' }}>RESET</button>
-        </div>
-      </div>
+            className="retro-btn text-xs px-3 py-1">RESET</button>
+    </>
+  )
+
+  const stateBody = (
+    <div className="space-y-1">
+      <div>Topic mode: {partCount === 1 ? 'single append-only log' : `${partCount} partitions`}</div>
+      <div>Preview route: {preview >= 0 ? `key "${inputKey}" -> P${preview}` : 'enter a key'}</div>
+      <div>Durability: {state.acksMode}; total consumer lag: {totalLag}</div>
+      <div>Consumer group: {group.consumers.length} member(s){group.isRebalancing ? ' rebalancing now' : ''}</div>
     </div>
+  )
+
+  return (
+    <LearningModuleShell
+      visual={<div className="flex h-full items-center justify-center overflow-hidden px-2">{renderVisualization()}</div>}
+      traceTitle="MESSAGE DECISION TRACE"
+      traceMeta={state.lastOp}
+      traceSteps={getTraceSteps()}
+      stateTitle="WHAT KAFKA RECORDS"
+      stateBody={stateBody}
+      eventsTitle="EVENT LOG"
+      events={state.recentEvents.slice(0, 5).map(e => ({ id: e.id, text: e.text, color: e.color }))}
+      emptyEventText="Step a produced message to see partition routing, append offsets, and consumption."
+      latestKey={inputKey ? `key:${inputKey}` : undefined}
+      controls={controls}
+      minVisualHeight={240}
+    />
   )
 }

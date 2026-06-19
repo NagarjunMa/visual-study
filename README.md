@@ -2,7 +2,7 @@
 
 > See how systems actually work. 15 interactive simulations across 9 tracks — system design, databases, AI, networking, message brokers, rate limiting, audio fingerprinting, and distributed data. Free, no signup.
 
-[![React](https://img.shields.io/badge/React-18-blue.svg)](https://react.dev/)
+[![React](https://img.shields.io/badge/React-19-blue.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue.svg)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-5.4-purple.svg)](https://vitejs.dev/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
@@ -118,7 +118,7 @@ src/
 
 | Layer | Tech | Why |
 |-------|------|-----|
-| UI | React 18 | Hooks for simulation state |
+| UI | React 19 | Hooks for simulation state |
 | Build | Vite 5.4 | Fast HMR, optimized bundles |
 | Language | TypeScript | Type safety for simulation logic |
 | Styling | Tailwind CSS | Retro clean theme, utility-first |
